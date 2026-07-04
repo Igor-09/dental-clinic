@@ -5,14 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Имплант Клиник - График работы</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Firebase скрипты -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+    </script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+    </script>
 </head>
 <body>
     <div class="app-background">
         <div class="container">
-            <!-- Шапка -->
             <header class="header">
                 <div class="clinic-logo">
                     <span class="tooth-icon">🦷</span>
@@ -33,7 +35,6 @@
                 </div>
             </header>
 
-            <!-- Легенда -->
             <div class="legend-container">
                 <div class="legend-scroll">
                     <div class="legend-item"><span class="color-box" style="background:#607D8B;"></span>Димидов Д.П.</div>
@@ -41,7 +42,6 @@
                 </div>
             </div>
 
-            <!-- Навигация -->
             <div class="date-nav">
                 <button id="prevWeek" class="btn btn-nav">◀ Неделя</button>
                 <button id="prevDay" class="btn btn-nav">◀ День</button>
@@ -55,13 +55,11 @@
                 <button id="syncBtn" class="btn btn-sync" title="Синхронизировать">🔄</button>
             </div>
 
-            <!-- Статус -->
             <div id="syncStatus" class="sync-status">
                 <span id="syncDot" class="sync-dot offline"></span>
                 <span id="syncText">Подключение...</span>
             </div>
 
-            <!-- График -->
             <div class="schedule-wrapper">
                 <div class="schedule-table" id="scheduleTable">
                     <div class="loading">Загрузка расписания...</div>
@@ -70,7 +68,6 @@
         </div>
     </div>
 
-    <!-- Модальное окно -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
