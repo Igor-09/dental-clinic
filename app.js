@@ -1,5 +1,20 @@
 document.addEventListener('DOMContentLoaded', function() {
     
+    console.log('🚀 Запуск календаря v3.0 (Realtime DB)...');
+    
+    // Проверка Firebase
+    if (typeof firebase === 'undefined') {
+        console.error('❌ Firebase не загружен!');
+        document.getElementById('syncText').textContent = 'Firebase не загружен';
+        return;
+    }
+    
+    if (typeof db === 'undefined') {
+        console.error('❌ База данных не инициализирована!');
+        document.getElementById('syncText').textContent = 'База данных не подключена';
+        return;
+    }
+    
     // ========== СОСТОЯНИЕ ==========
     var currentUser = 'user1';
     var viewAllUsers = false;
@@ -31,96 +46,55 @@ document.addEventListener('DOMContentLoaded', function() {
         'user2': '#FF9800'
     };
     
-    // ========== FIREBASE ФУНКЦИИ ==========
+    // ========== ФУНКЦИИ БАЗЫ ДАННЫХ ==========
     
     function updateSyncStatus(status, text) {
-        syncDot.className = 'sync-dot ' + status;
-        syncText.textContent = text;
+        if (syncDot && syncText) {
+            syncDot.className = 'sync-dot ' + status;
+            syncText.textContent = text;
+        }
+        console.log('📡', status, '-', text);
     }
     
-    async function loadEventsFromDB() {
-        try {
+    // Слушаем статус подключения
+    db.ref('.info/connected').on('value', function(snap) {
+        if (snap.val() === true) {
+            updateSyncStatus('online', 'Подключено');
+            console.log('🟢 База данных подключена');
+        } else {
+            updateSyncStatus('offline', 'Нет подключения');
+            console.log('🔴 База данных отключена');
+        }
+    });
+    
+    // Загружаем события из базы данных
+    function loadEvents() {
+        return new Promise(function(resolve, reject) {
             updateSyncStatus('syncing', 'Загрузка...');
             
-            const snapshot = await db.collection('events').orderBy('createdAt').get();
-            var eventsObj = {};
-            
-            snapshot.forEach(function(doc) {
-                var data = doc.data();
-                if (!eventsObj[data.event_key]) {
-                    eventsObj[data.event_key] = [];
-                }
-                eventsObj[data.event_key].push({
-                    id: doc.id,
-                    title: data.title,
-                    patient: data.patient,
-                    phone: data.phone,
-                    type: data.type,
-                    color: data.color,
-                    comment: data.comment,
-                    user: data.user,
-                    createdAt: data.createdAt
-                });
+            db.ref('events').once('value').then(function(snapshot) {
+                var data = snapshot.val() || {};
+                console.log('✅ Загружено событий из базы');
+                updateSyncStatus('online', 'Готово');
+                resolve(data);
+            }).catch(function(error) {
+                console.error('❌ Ошибка загрузки:', error);
+                updateSyncStatus('offline', 'Ошибка загрузки');
+                resolve({});
             });
-            
-            updateSyncStatus('online', 'Готово');
-            return eventsObj;
-            
-        } catch (error) {
-            console.error('Ошибка загрузки:', error);
-            updateSyncStatus('offline', 'Ошибка. Локальные данные');
-            return loadLocalEvents();
-        }
+        });
     }
     
-    async function saveEventToDB(eventKey, eventData) {
-        try {
-            updateSyncStatus('syncing', 'Сохранение...');
-            
-            await db.collection('events').add({
-                event_key: eventKey,
-                title: eventData.title,
-                patient: eventData.patient,
-                phone: eventData.phone,
-                type: eventData.type,
-                color: eventData.color,
-                comment: eventData.comment,
-                user: eventData.user,
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            
-            updateSyncStatus('online', 'Сохранено');
-            return true;
-            
-        } catch (error) {
-            console.error('Ошибка сохранения:', error);
-            updateSyncStatus('offline', 'Ошибка сохранения');
-            return false;
-        }
+    // Сохраняем все события в базу
+    function saveAllEvents(eventsData) {
+        return db.ref('events').set(eventsData).then(function() {
+            console.log('✅ События сохранены в базу');
+        }).catch(function(error) {
+            console.error('❌ Ошибка сохранения:', error);
+        });
     }
     
-    async function deleteEventFromDB(eventId) {
-        try {
-            updateSyncStatus('syncing', 'Удаление...');
-            await db.collection('events').doc(eventId).delete();
-            updateSyncStatus('online', 'Удалено');
-            return true;
-        } catch (error) {
-            console.error('Ошибка удаления:', error);
-            return false;
-        }
-    }
-    
-    function saveLocalEvents() {
-        localStorage.setItem('dentalClinicEvents', JSON.stringify(events));
-    }
-    
-    function loadLocalEvents() {
-        var saved = localStorage.getItem('dentalClinicEvents');
-        return saved ? JSON.parse(saved) : {};
-    }
-    
-    // ========== ОСНОВНЫЕ ФУНКЦИИ ==========
+    // ========== ОТОБРАЖЕНИЕ ==========
     
     function formatDate(date) {
         var y = date.getFullYear();
@@ -159,12 +133,6 @@ document.addEventListener('DOMContentLoaded', function() {
         return ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек'][date.getMonth()];
     }
     
-    function escapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
-    
     function getEventTypeLabel(type) {
         var labels = {
             'consultation': 'Консультация',
@@ -179,15 +147,27 @@ document.addEventListener('DOMContentLoaded', function() {
         return labels[type] || type;
     }
     
+    function escapeHtml(text) {
+        var div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+    
+    // Генерация уникального ID
+    function generateId() {
+        return 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    }
+    
     async function renderSchedule() {
-        events = await loadEventsFromDB();
-        saveLocalEvents();
+        console.log('🔄 Обновление расписания...');
+        
+        // Загружаем данные
+        events = await loadEvents();
         
         var weekDates = getWeekDates(currentStartDate);
-        
         dateRangeDisplay.textContent = 
             weekDates[0].getDate() + ' ' + getMonthName(weekDates[0]) + 
-            ' - ' + weekDates[6].getDate() + ' ' + getMonthName(weekDates[6]) + ' ' + weekDates[6].getFullYear();
+            ' - ' + weekDates[6].getDate() + ' ' + getMonthName(weekDates[6]);
         datePicker.value = formatDate(currentStartDate);
         
         var html = '';
@@ -197,41 +177,59 @@ document.addEventListener('DOMContentLoaded', function() {
         html += '<div class="time-header-cell">Время</div>';
         
         for (var i = 0; i < 7; i++) {
-            var date = weekDates[i];
-            var todayClass = isToday(date) ? ' today' : '';
-            html += '<div class="date-header-cell' + todayClass + '" data-date="' + formatDate(date) + '">';
-            html += '<div class="date-day-name">' + getDayName(date) + '</div>';
-            html += '<div class="date-day-number">' + date.getDate() + '</div>';
-            html += '<div class="date-month">' + getMonthName(date) + '</div>';
+            var d = weekDates[i];
+            var cls = isToday(d) ? ' today' : '';
+            html += '<div class="date-header-cell' + cls + '" data-date="' + formatDate(d) + '">';
+            html += '<div class="date-day-name">' + getDayName(d) + '</div>';
+            html += '<div class="date-day-number">' + d.getDate() + '</div>';
+            html += '<div class="date-month">' + getMonthName(d) + '</div>';
             html += '</div>';
         }
         html += '</div>';
         
         // Временные слоты
-        for (var hour = 8; hour <= 21; hour++) {
+        for (var h = 8; h <= 21; h++) {
             html += '<div class="schedule-row">';
-            html += '<div class="time-cell">' + String(hour).padStart(2, '0') + ':00</div>';
+            html += '<div class="time-cell">' + String(h).padStart(2, '0') + ':00</div>';
             
             for (var d = 0; d < 7; d++) {
-                var dateKey = formatDate(weekDates[d]);
-                var timeKey = String(hour).padStart(2, '0') + ':00';
-                var eventKey = dateKey + '_' + timeKey;
-                var todayColClass = isToday(weekDates[d]) ? ' today-column' : '';
+                var dk = formatDate(weekDates[d]);
+                var tk = String(h).padStart(2, '0') + ':00';
+                var ek = dk + '_' + tk;
+                var tc = isToday(weekDates[d]) ? ' today-column' : '';
                 
-                html += '<div class="schedule-cell' + todayColClass + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
+                html += '<div class="schedule-cell' + tc + '" data-date="' + dk + '" data-time="' + tk + '" data-event-key="' + ek + '">';
                 
-                var cellEvents = events[eventKey] || [];
+                // Получаем события для этой ячейки
+                var cellEvents = [];
+                if (events[ek]) {
+                    // Конвертируем объект в массив
+                    for (var key in events[ek]) {
+                        if (events[ek].hasOwnProperty(key)) {
+                            var ev = events[ek][key];
+                            ev._id = key; // Сохраняем ID
+                            cellEvents.push(ev);
+                        }
+                    }
+                }
                 
+                // Фильтруем по пользователю
                 if (!viewAllUsers && currentUser !== 'all') {
                     cellEvents = cellEvents.filter(function(ev) {
                         return ev.user === currentUser;
                     });
                 }
                 
+                // Сортируем по времени создания
+                cellEvents.sort(function(a, b) {
+                    return (a.createdAt || '').localeCompare(b.createdAt || '');
+                });
+                
+                // Отображаем события
                 for (var e = 0; e < cellEvents.length; e++) {
                     var ev = cellEvents[e];
-                    html += '<div class="event-chip" style="background:' + ev.color + '" data-event-index="' + e + '">';
-                    html += '<div class="event-chip-title">' + escapeHtml(ev.title) + '</div>';
+                    html += '<div class="event-chip" style="background:' + (ev.color || '#607D8B') + '" data-event-id="' + (ev._id || '') + '">';
+                    html += '<div class="event-chip-title">' + escapeHtml(ev.title || '') + '</div>';
                     if (ev.patient) html += '<div class="event-chip-patient">' + escapeHtml(ev.patient) + '</div>';
                     if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
                     html += '</div>';
@@ -244,12 +242,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         scheduleTable.innerHTML = html;
         
-        addCellClickHandlers();
-        addEventClickHandlers();
-        addDateHeaderClickHandlers();
-    }
-    
-    function addCellClickHandlers() {
+        // Обработчики кликов по ячейкам
         document.querySelectorAll('.schedule-cell').forEach(function(cell) {
             cell.addEventListener('click', function(e) {
                 if (e.target.closest('.event-chip')) return;
@@ -258,40 +251,36 @@ document.addEventListener('DOMContentLoaded', function() {
                     time: this.dataset.time,
                     eventKey: this.dataset.eventKey
                 };
-                openNewEventModal();
+                openNewModal();
             });
         });
-    }
-    
-    function addEventClickHandlers() {
+        
+        // Обработчики кликов по событиям
         document.querySelectorAll('.event-chip').forEach(function(chip) {
             chip.addEventListener('click', function(e) {
                 e.stopPropagation();
                 var cell = this.closest('.schedule-cell');
-                var eventKey = cell.dataset.eventKey;
-                var eventIndex = parseInt(this.dataset.eventIndex);
-                var cellEvents = events[eventKey] || [];
+                var ek = cell.dataset.eventKey;
+                var evId = this.dataset.eventId;
                 
-                if (!viewAllUsers && currentUser !== 'all') {
-                    var filtered = cellEvents.filter(function(ev) { return ev.user === currentUser; });
-                    openEditModal(eventKey, filtered[eventIndex], cellEvents.indexOf(filtered[eventIndex]));
-                } else {
-                    openEditModal(eventKey, cellEvents[eventIndex], eventIndex);
+                if (events[ek] && events[ek][evId]) {
+                    openEditModal(ek, evId, events[ek][evId]);
                 }
             });
         });
-    }
-    
-    function addDateHeaderClickHandlers() {
-        document.querySelectorAll('.date-header-cell').forEach(function(header) {
-            header.addEventListener('click', function() {
+        
+        // Обработчики кликов по заголовкам дат
+        document.querySelectorAll('.date-header-cell').forEach(function(hdr) {
+            hdr.addEventListener('click', function() {
                 currentStartDate = new Date(this.dataset.date + 'T00:00:00');
                 renderSchedule();
             });
         });
+        
+        console.log('✅ Расписание обновлено');
     }
     
-    function openNewEventModal() {
+    function openNewModal() {
         editingEvent = { eventKey: selectedCell.eventKey, isNew: true };
         eventName.value = '';
         eventPatient.value = '';
@@ -305,14 +294,19 @@ document.addEventListener('DOMContentLoaded', function() {
         eventName.focus();
     }
     
-    function openEditModal(eventKey, event, eventIndex) {
-        editingEvent = { eventKey: eventKey, event: event, eventIndex: eventIndex, isNew: false };
-        eventName.value = event.title || '';
-        eventPatient.value = event.patient || '';
-        eventPhone.value = event.phone || '';
-        eventType.value = event.type || 'consultation';
-        eventColor.value = event.color || '#607D8B';
-        eventComment.value = event.comment || '';
+    function openEditModal(eventKey, eventId, eventData) {
+        editingEvent = { 
+            eventKey: eventKey, 
+            eventId: eventId, 
+            event: eventData, 
+            isNew: false 
+        };
+        eventName.value = eventData.title || '';
+        eventPatient.value = eventData.patient || '';
+        eventPhone.value = eventData.phone || '';
+        eventType.value = eventData.type || 'consultation';
+        eventColor.value = eventData.color || '#607D8B';
+        eventComment.value = eventData.comment || '';
         modalTitle.textContent = 'Редактировать запись';
         deleteEventBtn.style.display = 'inline-block';
         eventModal.style.display = 'block';
@@ -324,9 +318,13 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedCell = null;
     }
     
-    async function saveEvent() {
+    async function saveEventData() {
         var title = eventName.value.trim();
-        if (!title) { alert('Введите название'); eventName.focus(); return; }
+        if (!title) { 
+            alert('Введите название события'); 
+            eventName.focus(); 
+            return; 
+        }
         
         var eventData = {
             title: title,
@@ -335,56 +333,86 @@ document.addEventListener('DOMContentLoaded', function() {
             type: eventType.value,
             color: eventColor.value,
             comment: eventComment.value.trim(),
-            user: editingEvent.isNew ? currentUser : editingEvent.event.user
+            user: editingEvent.isNew ? currentUser : editingEvent.event.user,
+            createdAt: new Date().toISOString()
         };
         
-        if (editingEvent.isNew) {
-            await saveEventToDB(editingEvent.eventKey, eventData);
-        } else {
-            await deleteEventFromDB(editingEvent.event.id);
-            await saveEventToDB(editingEvent.eventKey, eventData);
-        }
-        
-        closeModal();
-        await renderSchedule();
-    }
-    
-    async function deleteEvent() {
-        if (editingEvent.isNew) { closeModal(); return; }
-        if (confirm('Удалить запись "' + editingEvent.event.title + '"?')) {
-            await deleteEventFromDB(editingEvent.event.id);
+        try {
+            updateSyncStatus('syncing', 'Сохранение...');
+            
+            if (editingEvent.isNew) {
+                // Новое событие
+                var newId = generateId();
+                var updates = {};
+                updates['events/' + editingEvent.eventKey + '/' + newId] = eventData;
+                await db.ref().update(updates);
+                console.log('✅ Новое событие создано:', newId);
+            } else {
+                // Обновление существующего
+                await db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).update(eventData);
+                console.log('✅ Событие обновлено:', editingEvent.eventId);
+            }
+            
+            updateSyncStatus('online', 'Сохранено!');
             closeModal();
             await renderSchedule();
+            
+        } catch (error) {
+            console.error('❌ Ошибка сохранения:', error);
+            updateSyncStatus('offline', 'Ошибка!');
+            alert('Не удалось сохранить: ' + error.message);
         }
     }
     
-    // ========== ОБРАБОТЧИКИ КНОПОК ==========
+    async function deleteEventData() {
+        if (editingEvent.isNew) { 
+            closeModal(); 
+            return; 
+        }
+        
+        if (!confirm('Удалить запись "' + editingEvent.event.title + '"?')) {
+            return;
+        }
+        
+        try {
+            updateSyncStatus('syncing', 'Удаление...');
+            
+            await db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).remove();
+            
+            console.log('✅ Событие удалено');
+            updateSyncStatus('online', 'Удалено');
+            closeModal();
+            await renderSchedule();
+            
+        } catch (error) {
+            console.error('❌ Ошибка удаления:', error);
+            updateSyncStatus('offline', 'Ошибка!');
+            alert('Не удалось удалить: ' + error.message);
+        }
+    }
+    
+    // ========== КНОПКИ ==========
     
     document.getElementById('prevDay').addEventListener('click', function() {
         currentStartDate.setDate(currentStartDate.getDate() - 1);
         renderSchedule();
     });
-    
     document.getElementById('nextDay').addEventListener('click', function() {
         currentStartDate.setDate(currentStartDate.getDate() + 1);
         renderSchedule();
     });
-    
     document.getElementById('prevWeek').addEventListener('click', function() {
         currentStartDate.setDate(currentStartDate.getDate() - 7);
         renderSchedule();
     });
-    
     document.getElementById('nextWeek').addEventListener('click', function() {
         currentStartDate.setDate(currentStartDate.getDate() + 7);
         renderSchedule();
     });
-    
     document.getElementById('todayBtn').addEventListener('click', function() {
         currentStartDate = new Date();
         renderSchedule();
     });
-    
     document.getElementById('syncBtn').addEventListener('click', function() {
         renderSchedule();
     });
@@ -412,8 +440,8 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.querySelector('.close-btn').addEventListener('click', closeModal);
     cancelEventBtn.addEventListener('click', closeModal);
-    saveEventBtn.addEventListener('click', saveEvent);
-    deleteEventBtn.addEventListener('click', deleteEvent);
+    saveEventBtn.addEventListener('click', saveEventData);
+    deleteEventBtn.addEventListener('click', deleteEventData);
     
     eventModal.addEventListener('click', function(e) {
         if (e.target === eventModal) closeModal();
@@ -421,13 +449,11 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal();
-        if (e.key === 'Enter' && eventModal.style.display === 'block' && document.activeElement !== eventComment) saveEvent();
+        if (e.key === 'Enter' && eventModal.style.display === 'block' && document.activeElement !== eventComment) saveEventData();
     });
     
-    // Автосинхронизация каждые 30 секунд
-    setInterval(function() { renderSchedule(); }, 30000);
-    
-    // Запуск
-    console.log('🦷 Имплант Клиник - График работы запущен!');
+    // ========== ЗАПУСК ==========
+    console.log('🦷 Календарь Имплант Клиник запущен!');
+    updateSyncStatus('syncing', 'Загрузка...');
     renderSchedule();
 });
