@@ -5,7 +5,7 @@
 const firebaseConfig = {
     apiKey: "AIzaSyCKvVY8gNq8T1mFyZxGdR3wB6jH5sL9pM2",
     authDomain: "dental-clinic-schedule-d5333.firebaseapp.com",
-    databaseURL: "https://dental-clinic-schedule-d5333-default-rtdb.firebaseio.com",
+    databaseURL: "https://dental-clinic-schedule-d5333-default-rtdb.europe-west1.firebasedatabase.app",
     projectId: "dental-clinic-schedule-d5333",
     storageBucket: "dental-clinic-schedule-d5333.appspot.com",
     messagingSenderId: "197348652215",
