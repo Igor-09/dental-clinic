@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Имплант Клиник - График работы</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="app-background">
+        <div class="container">
+            <!-- Шапка -->
+            <header class="header">
+                <div class="clinic-logo">
+                    <span class="tooth-icon">🦷</span>
+                    <div>
+                        <h1>Имплант Клиник</h1>
+                        <p class="clinic-subtitle">График работы специалистов</p>
+                    </div>
+                </div>
+                <div class="header-controls">
+                    <div class="user-control">
+                        <label for="userSelect">Специалист:</label>
+                        <select id="userSelect">
+                            <option value="user1">Димидов Д.П. - Хирург-имплантолог</option>
+                            <option value="user2">Казарьянц Э.А. - Ортопед</option>
+                        </select>
+                    </div>
+                    <button id="viewAllBtn" class="btn btn-view-all">👁 Все специалисты</button>
+                </div>
+            </header>
+
+            <!-- Легенда -->
+            <div class="legend-container">
+                <div class="legend-scroll">
+                    <div class="legend-item"><span class="color-box" style="background:#607D8B;"></span>Димидов Д.П.</div>
+                    <div class="legend-item"><span class="color-box" style="background:#FF9800;"></span>Казарьянц Э.А.</div>
+                </div>
+            </div>
+
+            <!-- Навигация -->
+            <div class="date-nav">
+                <button id="prevWeek" class="btn btn-nav">◀ Неделя</button>
+                <button id="prevDay" class="btn btn-nav">◀ День</button>
+                <div class="date-display">
+                    <input type="date" id="datePicker" class="date-picker">
+                    <span id="dateRangeDisplay" class="date-range-text"></span>
+                </div>
+                <button id="nextDay" class="btn btn-nav">День ▶</button>
+                <button id="nextWeek" class="btn btn-nav">Неделя ▶</button>
+                <button id="todayBtn" class="btn btn-today">Сегодня</button>
+                <button id="syncBtn" class="btn btn-sync" title="Синхронизировать">🔄</button>
+            </div>
+
+            <!-- Статус -->
+            <div id="syncStatus" class="sync-status">
+                <span id="syncDot" class="sync-dot offline"></span>
+                <span id="syncText">Подключение...</span>
+            </div>
+
+            <!-- График -->
+            <div class="schedule-wrapper">
+                <div class="schedule-table" id="scheduleTable">
+                    <div class="loading">Загрузка расписания...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="modalTitle">Создать запись</h2>
+            
+            <div class="form-group">
+                <label for="eventName">Название:</label>
+                <input type="text" id="eventName" placeholder="Например: Консультация, Имплантация...">
+            </div>
+            
+            <div class="form-group">
+                <label for="eventPatient">Пациент:</label>
+                <input type="text" id="eventPatient" placeholder="ФИО пациента">
+            </div>
+            
+            <div class="form-group">
+                <label for="eventPhone">Телефон:</label>
+                <input type="tel" id="eventPhone" placeholder="+7 (___) ___-__-__">
+            </div>
+            
+            <div class="form-group">
+                <label for="eventType">Тип приема:</label>
+                <select id="eventType">
+                    <option value="consultation">Консультация</option>
+                    <option value="implantation">Имплантация</option>
+                    <option value="removal">Удаление</option>
+                    <option value="examination">Осмотр</option>
+                    <option value="delivery">Сдача</option>
+                    <option value="scanning">Сканирование</option>
+                    <option value="fitting">Примерка</option>
+                    <option value="other">Прочее</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="eventColor">Цвет:</label>
+                <select id="eventColor">
+                    <option value="#607D8B">Серый</option>
+                    <option value="#FF9800">Оранжевый</option>
+                    <option value="#4CAF50">Зеленый</option>
+                    <option value="#2196F3">Голубой</option>
+                    <option value="#9C27B0">Фиолетовый</option>
+                    <option value="#F44336">Красный</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="eventComment">Комментарий:</label>
+                <textarea id="eventComment" rows="2" placeholder="Дополнительная информация..."></textarea>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="saveEventBtn" class="btn btn-save">Сохранить</button>
+                <button id="deleteEventBtn" class="btn btn-delete" style="display:none;">Удалить</button>
+                <button id="cancelEventBtn" class="btn btn-cancel">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
