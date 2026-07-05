@@ -47,7 +47,6 @@ function initApp(user) {
         'user2': { name: 'Казарьянц Э.А.', spec: 'Ортопед' }
     };
     
-    // Временные слоты
     var timeSlots = [];
     for (var h = 9; h <= 20; h++) {
         timeSlots.push(String(h).padStart(2, '0') + ':00');
@@ -166,8 +165,6 @@ function initApp(user) {
                     var eventKey = dateKey + '_' + timeKey;
                     var todayCol = isToday(weekDates[dayIdx]) ? ' today-column' : '';
                     
-                    html += '<div class="schedule-cell' + todayCol + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
-                    
                     var cellData = events[eventKey] || {};
                     var cellEvents = [];
                     var shownGroupIds = [];
@@ -192,19 +189,41 @@ function initApp(user) {
                         cellEvents = cellEvents.filter(function(ev) { return ev.user === currentUserId; });
                     }
                     
+                    var groupClass = '';
+                    if (cellEvents.length > 0 && cellEvents[0].groupId && cellEvents[0].spanCount > 1) {
+                        groupClass = ' group-cell';
+                    }
+                    
+                    html += '<div class="schedule-cell' + todayCol + groupClass + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
+                    
                     for (var e = 0; e < cellEvents.length; e++) {
                         var ev = cellEvents[e];
-                        var chipStyle = 'background:' + (ev.color || '#607D8B') + ';';
+                        var chipClass = 'event-chip';
                         
-                        if (ev.spanCount && ev.spanCount > 1) {
-                            chipStyle += 'min-height:' + (ev.spanCount * 28) + 'px;';
+                        if (ev.groupId && ev.spanCount > 1) {
+                            var currentTimeIndex = timeSlots.indexOf(timeKey);
+                            var startTimeIndex = timeSlots.indexOf(ev.startTime);
+                            var endTimeIndex = timeSlots.indexOf(ev.endTime);
+                            
+                            if (currentTimeIndex === startTimeIndex && currentTimeIndex === endTimeIndex) {
+                                chipClass += ' group-single';
+                            } else if (currentTimeIndex === startTimeIndex) {
+                                chipClass += ' group-first';
+                            } else if (currentTimeIndex === endTimeIndex) {
+                                chipClass += ' group-last';
+                            } else {
+                                chipClass += ' group-middle';
+                            }
                         }
                         
-                        html += '<div class="event-chip" style="' + chipStyle + '" data-event-id="' + (ev._id || '') + '" data-group-id="' + (ev.groupId || '') + '">';
-                        html += '<div class="event-chip-title">' + escapeHtml(ev.title) + '</div>';
-                        if (ev.patient) html += '<div class="event-chip-patient">' + escapeHtml(ev.patient) + '</div>';
-                        if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
-                        if (ev.spanCount && ev.spanCount > 1) {
+                        html += '<div class="' + chipClass + '" style="background:' + (ev.color || '#607D8B') + ';" data-event-id="' + (ev._id || '') + '" data-group-id="' + (ev.groupId || '') + '">';
+                        
+                        if (!ev.groupId || ev.startTime === timeKey || ev.spanCount === 1) {
+                            html += '<div class="event-chip-title">' + escapeHtml(ev.title) + '</div>';
+                            if (ev.patient) html += '<div class="event-chip-patient">' + escapeHtml(ev.patient) + '</div>';
+                            if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
+                        }
+                        if (ev.spanCount && ev.spanCount > 1 && ev.startTime === timeKey) {
                             html += '<div class="event-chip-time">⏱ ' + ev.startTime + ' — ' + ev.endTime + '</div>';
                         }
                         html += '</div>';
@@ -254,9 +273,7 @@ function initApp(user) {
         });
     }
     
-    // Добавляем поля выбора времени в модальное окно
     function addTimeSelects() {
-        // Проверяем, есть ли уже поля
         if (document.getElementById('eventStartTime')) return;
         
         var formGroups = document.querySelectorAll('.modal-content .form-group');
@@ -269,7 +286,6 @@ function initApp(user) {
         });
         
         if (phoneGroup) {
-            // Создаём контейнер для выбора времени
             var timeContainer = document.createElement('div');
             timeContainer.className = 'form-group';
             timeContainer.innerHTML = `
@@ -283,7 +299,6 @@ function initApp(user) {
             
             phoneGroup.parentNode.insertBefore(timeContainer, phoneGroup.nextSibling);
             
-            // Заполняем списки времени
             var startSelect = document.getElementById('eventStartTime');
             var endSelect = document.getElementById('eventEndTime');
             
@@ -310,13 +325,11 @@ function initApp(user) {
         eventColor.value = userColors[currentUserId] || '#607D8B';
         eventComment.value = '';
         
-        // Устанавливаем время
         var startSelect = document.getElementById('eventStartTime');
         var endSelect = document.getElementById('eventEndTime');
         
         if (startSelect) startSelect.value = selectedCell.time;
         if (endSelect) {
-            // По умолчанию конец = начало + 30 минут
             var currentIndex = timeSlots.indexOf(selectedCell.time);
             var nextIndex = Math.min(currentIndex + 1, timeSlots.length - 1);
             endSelect.value = timeSlots[nextIndex];
@@ -339,7 +352,6 @@ function initApp(user) {
         eventColor.value = evData.color || '#607D8B';
         eventComment.value = evData.comment || '';
         
-        // Устанавливаем время для редактирования
         var startSelect = document.getElementById('eventStartTime');
         var endSelect = document.getElementById('eventEndTime');
         
@@ -388,7 +400,6 @@ function initApp(user) {
         var promises = [];
         
         if (editingEvent.isNew) {
-            // Сохраняем во все ячейки диапазона
             cells.forEach(function(cell, index) {
                 var eventKey = cell.date + '_' + cell.time;
                 var eventId = groupId + '_' + index;
@@ -411,7 +422,6 @@ function initApp(user) {
                 promises.push(db.ref('events/' + eventKey + '/' + eventId).set(data));
             });
         } else {
-            // Обновление существующего
             var data = {
                 title: title,
                 patient: eventPatient.value.trim(),
