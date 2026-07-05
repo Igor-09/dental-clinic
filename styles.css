@@ -808,3 +808,29 @@ body {
     padding: 0 !important;
     border-bottom: none !important;
 }
+/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ (СПЛОШНЫЕ) ========== */
+.schedule-cell.group-cell {
+    padding: 0 !important;
+}
+
+.event-chip.group-first {
+    border-radius: 6px 6px 0 0 !important;
+    margin-top: 2px !important;
+}
+
+.event-chip.group-middle {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border-top: 1px solid rgba(255,255,255,0.3) !important;
+    border-bottom: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+.event-chip.group-last {
+    border-radius: 0 0 6px 6px !important;
+    margin-bottom: 2px !important;
+    border-top: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+.event-chip.group-single {
+    border-radius: 6px !important;
+}
