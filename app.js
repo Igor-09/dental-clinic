@@ -1,11 +1,8 @@
 // ========== ФУНКЦИЯ ЗАПУСКА ПРИЛОЖЕНИЯ ==========
-// Вызывается из auth.js после успешного входа
-
 function initApp(user) {
     
     console.log('🚀 Запуск приложения для:', user.name);
     
-    // Проверки
     if (typeof firebase === 'undefined') {
         document.getElementById('syncText').textContent = 'Ошибка: Firebase не загружен';
         return;
@@ -22,6 +19,9 @@ function initApp(user) {
     var events = {};
     var editingEvent = null;
     var selectedCell = null;
+    var isSelectingMode = false;
+    var selectedCells = [];
+    var selectionStart = null;
     
     // DOM элементы
     var userSelect = document.getElementById('userSelect');
@@ -51,6 +51,15 @@ function initApp(user) {
         'user1': { name: 'Димидов Д.П.', spec: 'Хирург-имплантолог' },
         'user2': { name: 'Казарьянц Э.А.', spec: 'Ортопед' }
     };
+    
+    // Генерируем временные слоты
+    var timeSlots = [];
+    for (var h = 9; h <= 20; h++) {
+        timeSlots.push(String(h).padStart(2, '0') + ':00');
+        if (h < 20) {
+            timeSlots.push(String(h).padStart(2, '0') + ':30');
+        }
+    }
     
     userSelect.value = currentUserId;
     
@@ -130,6 +139,34 @@ function initApp(user) {
         return div.innerHTML;
     }
     
+    // Проверяем, занята ли ячейка
+    function isCellOccupied(dateKey, timeKey) {
+        var eventKey = dateKey + '_' + timeKey;
+        var cellData = events[eventKey] || {};
+        var count = 0;
+        for (var k in cellData) {
+            if (cellData.hasOwnProperty(k)) count++;
+        }
+        return count > 0;
+    }
+    
+    // Подсветка выбранных ячеек
+    function highlightSelectedCells() {
+        document.querySelectorAll('.schedule-cell').forEach(function(cell) {
+            var date = cell.dataset.date;
+            var time = cell.dataset.time;
+            cell.classList.remove('selected-range');
+        });
+        
+        selectedCells.forEach(function(c) {
+            var selector = '.schedule-cell[data-date="' + c.date + '"][data-time="' + c.time + '"]';
+            var cell = document.querySelector(selector);
+            if (cell) {
+                cell.classList.add('selected-range');
+            }
+        });
+    }
+    
     function renderSchedule() {
         loadEvents(function(loadedEvents) {
             events = loadedEvents;
@@ -152,52 +189,75 @@ function initApp(user) {
             }
             html += '</div>';
             
-            // Генерируем временные слоты с 09:00 до 20:00 с шагом 30 минут
-var timeSlots = [];
-for (var h = 9; h <= 20; h++) {
-    timeSlots.push(String(h).padStart(2, '0') + ':00');
-    if (h < 20) {
-        timeSlots.push(String(h).padStart(2, '0') + ':30');
-    }
-}
-
-// Отрисовываем строки для каждого временного слота
-for (var t = 0; t < timeSlots.length; t++) {
-    var timeKey = timeSlots[t];
-    html += '<div class="schedule-row">';
-    html += '<div class="time-cell">' + timeKey + '</div>';
+            // Подсказка
+            html += '<div class="selection-hint">💡 Зажмите Shift и кликните на вторую ячейку, чтобы объединить</div>';
+            
+            for (var t = 0; t < timeSlots.length; t++) {
+                var timeKey = timeSlots[t];
+                html += '<div class="schedule-row">';
+                html += '<div class="time-cell">' + timeKey + '</div>';
+                
                 for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
                     var dateKey = formatDate(weekDates[dayIdx]);
-                    var timeKey = String(h).padStart(2, '0') + ':00';
                     var eventKey = dateKey + '_' + timeKey;
-                    html += '<div class="schedule-cell' + (isToday(weekDates[dayIdx]) ? ' today-column' : '') + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
+                    var todayCol = isToday(weekDates[dayIdx]) ? ' today-column' : '';
                     
+                    html += '<div class="schedule-cell' + todayCol + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
+                    
+                    // Проверяем объединённые события
                     var cellData = events[eventKey] || {};
                     var cellEvents = [];
+                    var shownGroupIds = [];
+                    
                     for (var key in cellData) {
                         if (cellData.hasOwnProperty(key)) {
                             var ev = cellData[key];
                             ev._id = key;
+                            
+                            // Проверяем, часть ли это объединённого события
+                            if (ev.groupId && shownGroupIds.indexOf(ev.groupId) >= 0) {
+                                continue; // Уже показали это событие
+                            }
+                            if (ev.groupId) {
+                                shownGroupIds.push(ev.groupId);
+                            }
+                            
                             cellEvents.push(ev);
                         }
                     }
+                    
                     if (!viewAllUsers) {
                         cellEvents = cellEvents.filter(function(ev) { return ev.user === currentUserId; });
                     }
+                    
                     for (var e = 0; e < cellEvents.length; e++) {
                         var ev = cellEvents[e];
-                        html += '<div class="event-chip" style="background:' + (ev.color || '#607D8B') + '" data-event-id="' + (ev._id || '') + '">';
+                        var chipStyle = 'background:' + (ev.color || '#607D8B') + ';';
+                        
+                        // Если это объединённое событие — делаем чип выше
+                        if (ev.groupId) {
+                            chipStyle += 'min-height:' + (ev.spanCount * 30) + 'px;';
+                            chipStyle += 'z-index:10;';
+                        }
+                        
+                        html += '<div class="event-chip" style="' + chipStyle + '" data-event-id="' + (ev._id || '') + '" data-group-id="' + (ev.groupId || '') + '">';
                         html += '<div class="event-chip-title">' + escapeHtml(ev.title) + '</div>';
                         if (ev.patient) html += '<div class="event-chip-patient">' + escapeHtml(ev.patient) + '</div>';
                         if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
+                        if (ev.spanCount && ev.spanCount > 1) {
+                            html += '<div class="event-chip-time">⏱ ' + ev.spanCount + ' слотов</div>';
+                        }
                         html += '</div>';
                     }
+                    
                     html += '</div>';
                 }
                 html += '</div>';
             }
             scheduleTable.innerHTML = html;
             addClickHandlers();
+            selectedCells = [];
+            isSelectingMode = false;
         });
     }
     
@@ -205,19 +265,68 @@ for (var t = 0; t < timeSlots.length; t++) {
         document.querySelectorAll('.schedule-cell').forEach(function(cell) {
             cell.addEventListener('click', function(e) {
                 if (e.target.closest('.event-chip')) return;
-                selectedCell = { date: this.dataset.date, time: this.dataset.time, eventKey: this.dataset.eventKey };
+                
+                var date = this.dataset.date;
+                var time = this.dataset.time;
+                var eventKey = this.dataset.eventKey;
+                
+                // Проверка на Shift для множественного выбора
+                if (e.shiftKey && selectedCells.length === 1) {
+                    // Выбираем диапазон ячеек
+                    var first = selectedCells[0];
+                    var dateIndex1 = getWeekDates(currentStartDate).map(function(d) { return formatDate(d); }).indexOf(first.date);
+                    var dateIndex2 = getWeekDates(currentStartDate).map(function(d) { return formatDate(d); }).indexOf(date);
+                    var timeIndex1 = timeSlots.indexOf(first.time);
+                    var timeIndex2 = timeSlots.indexOf(time);
+                    
+                    // Выбираем все ячейки в диапазоне
+                    selectedCells = [];
+                    var minDate = Math.min(dateIndex1, dateIndex2);
+                    var maxDate = Math.max(dateIndex1, dateIndex2);
+                    var minTime = Math.min(timeIndex1, timeIndex2);
+                    var maxTime = Math.max(timeIndex1, timeIndex2);
+                    
+                    var weekDates = getWeekDates(currentStartDate);
+                    for (var d = minDate; d <= maxDate; d++) {
+                        for (var t = minTime; t <= maxTime; t++) {
+                            selectedCells.push({
+                                date: formatDate(weekDates[d]),
+                                time: timeSlots[t]
+                            });
+                        }
+                    }
+                    
+                    highlightSelectedCells();
+                    return;
+                }
+                
+                // Обычный клик — выбираем одну ячейку
+                selectedCells = [{ date: date, time: time, eventKey: eventKey }];
+                selectedCell = { date: date, time: time, eventKey: eventKey };
+                highlightSelectedCells();
+                
+                // Открываем модальное окно
                 openNewModal();
             });
         });
+        
         document.querySelectorAll('.event-chip').forEach(function(chip) {
             chip.addEventListener('click', function(e) {
                 e.stopPropagation();
                 var cell = this.closest('.schedule-cell');
                 var ek = cell.dataset.eventKey;
                 var evId = this.dataset.eventId;
-                if (events[ek] && events[ek][evId]) openEditModal(ek, evId, events[ek][evId]);
+                var groupId = this.dataset.groupId;
+                
+                if (groupId && events[ek] && events[ek][evId]) {
+                    // Открываем событие из любой ячейки группы
+                    openEditModal(ek, evId, events[ek][evId]);
+                } else if (events[ek] && events[ek][evId]) {
+                    openEditModal(ek, evId, events[ek][evId]);
+                }
             });
         });
+        
         document.querySelectorAll('.date-header-cell').forEach(function(hdr) {
             hdr.addEventListener('click', function() {
                 currentStartDate = new Date(this.dataset.date + 'T00:00:00');
@@ -227,14 +336,30 @@ for (var t = 0; t < timeSlots.length; t++) {
     }
     
     function openNewModal() {
-        editingEvent = { eventKey: selectedCell.eventKey, isNew: true };
+        var timeRange = '';
+        if (selectedCells.length === 1) {
+            timeRange = selectedCells[0].date + ' ' + selectedCells[0].time;
+        } else if (selectedCells.length > 1) {
+            // Сортируем по времени
+            var sorted = selectedCells.slice().sort(function(a, b) {
+                return timeSlots.indexOf(a.time) - timeSlots.indexOf(b.time);
+            });
+            timeRange = sorted[0].date + ' ' + sorted[0].time + ' — ' + sorted[sorted.length - 1].time;
+        }
+        
+        editingEvent = { 
+            isNew: true,
+            cells: selectedCells.slice(),
+            spanCount: selectedCells.length
+        };
+        
         eventName.value = '';
         eventPatient.value = '';
         eventPhone.value = '';
         eventType.value = 'consultation';
         eventColor.value = userColors[currentUserId] || '#607D8B';
         eventComment.value = '';
-        modalTitle.textContent = 'Новая запись - ' + selectedCell.date + ' ' + selectedCell.time;
+        modalTitle.textContent = 'Новая запись - ' + timeRange;
         deleteEventBtn.style.display = 'none';
         eventModal.style.display = 'block';
         eventName.focus();
@@ -257,41 +382,99 @@ for (var t = 0; t < timeSlots.length; t++) {
         eventModal.style.display = 'none';
         editingEvent = null;
         selectedCell = null;
+        selectedCells = [];
+        highlightSelectedCells();
     }
     
     function saveEvent() {
         var title = eventName.value.trim();
         if (!title) { alert('Введите название'); eventName.focus(); return; }
-        var data = {
-            title: title,
-            patient: eventPatient.value.trim(),
-            phone: eventPhone.value.trim(),
-            type: eventType.value,
-            color: eventColor.value,
-            comment: eventComment.value.trim(),
-            user: currentUserId,
-            createdAt: new Date().toISOString()
-        };
+        
         setStatus('syncing', 'Сохранение...');
-        var refPath = editingEvent.isNew ? 
-            'events/' + editingEvent.eventKey + '/' + Date.now() :
-            'events/' + editingEvent.eventKey + '/' + editingEvent.eventId;
-        db.ref(refPath).set(data).then(function() {
+        
+        var groupId = Date.now().toString();
+        var promises = [];
+        
+        if (editingEvent.isNew && editingEvent.cells && editingEvent.cells.length > 0) {
+            // Сохраняем событие во все выбранные ячейки
+            editingEvent.cells.forEach(function(cell, index) {
+                var eventKey = cell.date + '_' + cell.time;
+                var eventId = groupId + '_' + index;
+                
+                var data = {
+                    title: title,
+                    patient: eventPatient.value.trim(),
+                    phone: eventPhone.value.trim(),
+                    type: eventType.value,
+                    color: eventColor.value,
+                    comment: eventComment.value.trim(),
+                    user: currentUserId,
+                    groupId: groupId,
+                    spanCount: editingEvent.cells.length,
+                    createdAt: new Date().toISOString()
+                };
+                
+                promises.push(db.ref('events/' + eventKey + '/' + eventId).set(data));
+            });
+        } else if (!editingEvent.isNew) {
+            // Обновляем существующее
+            var data = {
+                title: title,
+                patient: eventPatient.value.trim(),
+                phone: eventPhone.value.trim(),
+                type: eventType.value,
+                color: eventColor.value,
+                comment: eventComment.value.trim(),
+                user: editingEvent.event.user,
+                groupId: editingEvent.event.groupId || null,
+                spanCount: editingEvent.event.spanCount || 1,
+                createdAt: editingEvent.event.createdAt || new Date().toISOString()
+            };
+            
+            promises.push(db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).set(data));
+        }
+        
+        Promise.all(promises).then(function() {
             setStatus('online', 'Сохранено!');
             closeModal();
             renderSchedule();
-        }).catch(function(e) { alert('Ошибка: ' + e.message); });
+        }).catch(function(e) { 
+            alert('Ошибка: ' + e.message); 
+        });
     }
     
     function deleteEvent() {
         if (!editingEvent || editingEvent.isNew) { closeModal(); return; }
         if (!confirm('Удалить запись?')) return;
+        
         setStatus('syncing', 'Удаление...');
-        db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).remove().then(function() {
-            setStatus('online', 'Удалено');
-            closeModal();
-            renderSchedule();
-        });
+        
+        var groupId = editingEvent.event.groupId;
+        
+        if (groupId) {
+            // Удаляем все события группы
+            var promises = [];
+            for (var key in events) {
+                if (events.hasOwnProperty(key)) {
+                    for (var evId in events[key]) {
+                        if (events[key].hasOwnProperty(evId) && events[key][evId].groupId === groupId) {
+                            promises.push(db.ref('events/' + key + '/' + evId).remove());
+                        }
+                    }
+                }
+            }
+            Promise.all(promises).then(function() {
+                setStatus('online', 'Удалено');
+                closeModal();
+                renderSchedule();
+            });
+        } else {
+            db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).remove().then(function() {
+                setStatus('online', 'Удалено');
+                closeModal();
+                renderSchedule();
+            });
+        }
     }
     
     // Навигация
@@ -325,6 +508,18 @@ for (var t = 0; t < timeSlots.length; t++) {
     document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
     document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
     eventModal.addEventListener('click', function(e) { if (e.target === eventModal) closeModal(); });
+    
+    // Сброс выделения по Escape
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (eventModal.style.display === 'block') {
+                closeModal();
+            } else {
+                selectedCells = [];
+                highlightSelectedCells();
+            }
+        }
+    });
     
     // ЗАПУСК
     setStatus('online', 'Готово');
