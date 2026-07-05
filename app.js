@@ -1,6 +1,6 @@
 function initApp(user) {
     
-    console.log('Запуск приложения для:', user.name);
+    console.log('Запуск для:', user.name);
     
     if (typeof firebase === 'undefined' || typeof db === 'undefined') {
         document.getElementById('syncText').textContent = 'Ошибка подключения';
@@ -30,7 +30,6 @@ function initApp(user) {
     var modalTitle = document.getElementById('modalTitle');
     var deleteEventBtn = document.getElementById('deleteEventBtn');
     var currentUserName = document.getElementById('currentUserName');
-    var headerSubtitle = document.getElementById('headerSubtitle');
     
     var userColors = { 'user1': '#607D8B', 'user2': '#FF9800' };
     var userNames = {
@@ -129,7 +128,7 @@ function initApp(user) {
                         var ov = document.createElement('div');
                         ov.className = 'merged-event-overlay';
                         ov.style.cssText = 'background:' + (me.event.color||'#607D8B') + ';top:' + me.top + 'px;height:' + me.height + 'px;';
-                        ov.innerHTML = '<div style="font-weight:700;margin-bottom:2px;">' + esc(me.event.title) + '</div>' + (me.event.patient?'<div style="font-size:10px;opacity:0.9;">'+esc(me.event.patient)+'</div>':'') + (me.event.type?'<div style="font-size:10px;opacity:0.8;">'+getEventTypeLabel(me.event.type)+'</div>':'') + '<div style="font-size:10px;opacity:0.8;">' + me.event.startTime + ' — ' + me.event.endTime + '</div>';
+                        ov.innerHTML = '<div style="font-weight:700;">' + esc(me.event.title) + '</div>' + (me.event.patient?'<div style="font-size:10px;">'+esc(me.event.patient)+'</div>':'') + '<div style="font-size:10px;">' + me.event.startTime + ' — ' + me.event.endTime + '</div>';
                         ov.onclick = function(e) { e.stopPropagation(); openEditModal(me.event._eventKey, me.event._id, me.event); };
                         fc.style.position = 'relative';
                         fc.appendChild(ov);
@@ -137,18 +136,16 @@ function initApp(user) {
                 }
             }
             
-            // Клики по ячейкам
             document.querySelectorAll('.schedule-cell').forEach(function(cell) {
-                cell.addEventListener('click', function(e) {
+                cell.onclick = function(e) {
                     if (e.target.closest('.merged-event-overlay')) return;
                     selectedCell = { date: this.dataset.date, time: this.dataset.time };
                     openNewModal();
-                });
+                };
             });
             
-            // Клики по заголовкам дат
             document.querySelectorAll('.date-header-cell').forEach(function(h) {
-                h.addEventListener('click', function() { currentStartDate = new Date(this.dataset.date + 'T00:00:00'); renderSchedule(); });
+                h.onclick = function() { currentStartDate = new Date(this.dataset.date + 'T00:00:00'); renderSchedule(); };
             });
         });
     }
@@ -162,8 +159,7 @@ function initApp(user) {
         eventColor.value = userColors[currentUserId] || '#607D8B';
         eventComment.value = '';
         
-        // Добавляем поля времени
-        addTimeSelectsToModal(selectedCell.time, selectedCell.time);
+        addTimeSelects(selectedCell.time, null);
         
         modalTitle.textContent = 'Новая запись - ' + selectedCell.date + ' ' + selectedCell.time;
         deleteEventBtn.style.display = 'none';
@@ -172,7 +168,14 @@ function initApp(user) {
     }
     
     function openEditModal(ek, evId, evData) {
-        editingEvent = { eventKey: ek, eventId: evId, event: evData, isNew: false, date: ek.split('_')[0] };
+        editingEvent = { 
+            eventKey: ek, 
+            eventId: evId, 
+            event: evData, 
+            isNew: false,
+            date: ek.split('_')[0]
+        };
+        
         eventName.value = evData.title || '';
         eventPatient.value = evData.patient || '';
         eventPhone.value = evData.phone || '';
@@ -180,24 +183,20 @@ function initApp(user) {
         eventColor.value = evData.color || '#607D8B';
         eventComment.value = evData.comment || '';
         
-        addTimeSelectsToModal(evData.startTime || '', evData.endTime || '');
+        addTimeSelects(evData.startTime, evData.endTime);
         
         modalTitle.textContent = 'Редактировать запись';
         deleteEventBtn.style.display = 'inline-block';
         eventModal.style.display = 'block';
     }
     
-    function addTimeSelectsToModal(startVal, endVal) {
-        // Удаляем старые поля времени
+    function addTimeSelects(startVal, endVal) {
         var old = document.querySelector('.time-range-select');
         if (old && old.parentElement) old.parentElement.remove();
         
-        var phoneGroup = document.querySelector('.form-group:has(#eventPhone)');
-        if (!phoneGroup) {
-            // Ищем по ID
-            var pg = document.getElementById('eventPhone');
-            if (pg) phoneGroup = pg.closest('.form-group');
-        }
+        var pg = document.getElementById('eventPhone');
+        if (!pg) return;
+        var phoneGroup = pg.closest('.form-group');
         if (!phoneGroup) return;
         
         var tc = document.createElement('div');
@@ -212,7 +211,7 @@ function initApp(user) {
         });
         if (startVal) ss.value = startVal;
         if (endVal) es.value = endVal;
-        if (!endVal && startVal) {
+        if (startVal && !endVal) {
             var idx = timeSlots.indexOf(startVal);
             if (idx >= 0 && idx < timeSlots.length - 1) es.value = timeSlots[idx + 1];
         }
@@ -220,50 +219,67 @@ function initApp(user) {
     
     function closeModal() {
         eventModal.style.display = 'none';
-        editingEvent = null;
-        selectedCell = null;
     }
     
     function saveEvent() {
+        console.log('=== saveEvent ===');
+        console.log('editingEvent:', JSON.stringify(editingEvent));
+        
+        if (!editingEvent) {
+            alert('Ошибка: нет данных для сохранения');
+            return;
+        }
+        
         var title = eventName.value.trim();
         if (!title) { alert('Введите название'); eventName.focus(); return; }
         
-        console.log('Сохранение. editingEvent:', JSON.stringify(editingEvent));
+        var ss = document.getElementById('eventStartTime');
+        var es = document.getElementById('eventEndTime');
         
-        var ss = document.getElementById('eventStartTime'), es = document.getElementById('eventEndTime');
-        var startTime = ss ? ss.value : (editingEvent.time || '09:00');
+        var startTime = ss ? ss.value : (editingEvent.time || editingEvent.event?.startTime || '09:00');
         var endTime = es ? es.value : startTime;
-        var date = editingEvent.date || (editingEvent.eventKey ? editingEvent.eventKey.split('_')[0] : formatDate(new Date()));
         
-        console.log('Дата:', date, 'Начало:', startTime, 'Конец:', endTime);
+        // Получаем дату
+        var date;
+        if (editingEvent.date) {
+            date = editingEvent.date;
+        } else if (editingEvent.eventKey) {
+            date = editingEvent.eventKey.split('_')[0];
+        } else if (selectedCell && selectedCell.date) {
+            date = selectedCell.date;
+        } else {
+            date = formatDate(new Date());
+        }
         
-        var si = timeSlots.indexOf(startTime), ei = timeSlots.indexOf(endTime);
-        if (si < 0 || ei < si) { alert('Ошибка времени'); return; }
+        console.log('date:', date, 'start:', startTime, 'end:', endTime);
+        
+        var si = timeSlots.indexOf(startTime);
+        var ei = timeSlots.indexOf(endTime);
+        if (si < 0 || ei < si) { alert('Ошибка диапазона времени'); return; }
         
         setStatus('syncing', 'Сохранение...');
         
-        var gid = (editingEvent.isNew ? 'g' + Date.now() : (editingEvent.event.groupId || 'g' + Date.now()));
+        var gid = editingEvent.isNew ? 'g' + Date.now() : (editingEvent.event?.groupId || 'g' + Date.now());
         var promises = [];
         
-        if (!editingEvent.isNew && editingEvent.event.groupId) {
-            // Удаляем ВСЕ старые ячейки этой группы
+        // Удаляем старые записи при редактировании
+        if (!editingEvent.isNew && editingEvent.event?.groupId) {
             for (var k in events) {
                 if (!events.hasOwnProperty(k)) continue;
                 for (var eid in events[k]) {
                     if (events[k].hasOwnProperty(eid) && events[k][eid].groupId === editingEvent.event.groupId) {
-                        console.log('Удаляем старую ячейку:', k + '/' + eid);
                         promises.push(db.ref('events/' + k + '/' + eid).remove());
                     }
                 }
             }
         } else if (!editingEvent.isNew) {
-            // Одиночное событие
             promises.push(db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).remove());
         }
         
-        // Создаём новые ячейки
+        // Создаём новые
         for (var i = si; i <= ei; i++) {
-            var ek = date + '_' + timeSlots[i], eid = gid + '_' + i;
+            var ek = date + '_' + timeSlots[i];
+            var eid = gid + '_' + i;
             var data = {
                 title: title,
                 patient: eventPatient.value.trim(),
@@ -271,34 +287,34 @@ function initApp(user) {
                 type: eventType.value,
                 color: eventColor.value,
                 comment: eventComment.value.trim(),
-                user: editingEvent.isNew ? currentUserId : editingEvent.event.user,
+                user: editingEvent.isNew ? currentUserId : (editingEvent.event?.user || currentUserId),
                 groupId: gid,
                 spanCount: ei - si + 1,
                 startTime: startTime,
                 endTime: endTime,
-                createdAt: (editingEvent.event ? editingEvent.event.createdAt : null) || new Date().toISOString()
+                createdAt: editingEvent.event?.createdAt || new Date().toISOString()
             };
-            console.log('Создаём ячейку:', ek);
             promises.push(db.ref('events/' + ek + '/' + eid).set(data));
         }
         
         Promise.all(promises).then(function() {
-            console.log('Всё сохранено!');
+            console.log('Сохранено!');
             setStatus('online', 'Сохранено!');
             closeModal();
             renderSchedule();
         }).catch(function(e) {
-            console.error('Ошибка сохранения:', e);
-            alert('Ошибка: ' + e.message);
+            console.error('Ошибка:', e);
+            alert('Ошибка сохранения');
         });
     }
     
     function deleteEvent() {
         if (!editingEvent || editingEvent.isNew) { closeModal(); return; }
         if (!confirm('Удалить запись?')) return;
-        setStatus('syncing', 'Удаление...');
         
-        var gid = editingEvent.event.groupId, promises = [];
+        setStatus('syncing', 'Удаление...');
+        var promises = [];
+        var gid = editingEvent.event?.groupId;
         
         if (gid) {
             for (var k in events) {
@@ -322,14 +338,13 @@ function initApp(user) {
     document.getElementById('prevWeek').addEventListener('click', function() { currentStartDate.setDate(currentStartDate.getDate() - 7); renderSchedule(); });
     document.getElementById('nextWeek').addEventListener('click', function() { currentStartDate.setDate(currentStartDate.getDate() + 7); renderSchedule(); });
     document.getElementById('todayBtn').addEventListener('click', function() { currentStartDate = new Date(); renderSchedule(); });
-    document.getElementById('syncBtn').addEventListener('click', function() { renderSchedule(); });
+    document.getElementById('syncBtn').addEventListener('click', renderSchedule);
     
     datePicker.addEventListener('change', function() { if (this.value) { currentStartDate = new Date(this.value + 'T00:00:00'); renderSchedule(); } });
     
     userSelect.addEventListener('change', function() {
         currentUserId = this.value;
-        var u = userNames[currentUserId];
-        currentUserName.textContent = '👤 ' + u.name + ' (' + u.spec + ')';
+        currentUserName.textContent = '👤 ' + userNames[currentUserId].name;
         renderSchedule();
     });
     
@@ -339,27 +354,17 @@ function initApp(user) {
         renderSchedule();
     });
     
-    // Кнопки модального окна — назначаем ОДИН раз через глобальные обработчики
-    document.getElementById('saveEventBtn').addEventListener('click', function() {
-        console.log('Клик по кнопке Сохранить');
-        saveEvent();
-    });
-    
-    document.getElementById('deleteEventBtn').addEventListener('click', function() {
-        console.log('Клик по кнопке Удалить');
-        deleteEvent();
-    });
-    
+    // Кнопки модального окна
+    document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
+    document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
     document.getElementById('cancelEventBtn').addEventListener('click', closeModal);
     document.querySelector('.close-btn').addEventListener('click', closeModal);
     eventModal.addEventListener('click', function(e) { if (e.target === eventModal) closeModal(); });
     
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal();
-        if (e.key === 'Enter' && eventModal.style.display === 'block' && document.activeElement.tagName !== 'TEXTAREA') saveEvent();
     });
     
-    // ЗАПУСК
     setStatus('online', 'Готово');
     renderSchedule();
 }
