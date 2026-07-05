@@ -55,6 +55,8 @@ function initApp(user) {
         }
     }
     
+    var CELL_HEIGHT = 50; // высота одной ячейки
+    
     userSelect.value = currentUserId;
     
     function setStatus(status, text) {
@@ -143,6 +145,8 @@ function initApp(user) {
             datePicker.value = formatDate(currentStartDate);
             
             var html = '';
+            
+            // Заголовки дат
             html += '<div class="date-headers">';
             html += '<div class="time-header-cell">Время</div>';
             for (var i = 0; i < 7; i++) {
@@ -155,6 +159,45 @@ function initApp(user) {
             }
             html += '</div>';
             
+            // Подготавливаем объединённые события для каждой колонки
+            var mergedEvents = {};
+            for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
+                var dateKey = formatDate(weekDates[dayIdx]);
+                mergedEvents[dateKey] = [];
+                var shownGroups = {};
+                
+                for (var t = 0; t < timeSlots.length; t++) {
+                    var timeKey = timeSlots[t];
+                    var eventKey = dateKey + '_' + timeKey;
+                    var cellData = events[eventKey] || {};
+                    
+                    for (var key in cellData) {
+                        if (cellData.hasOwnProperty(key)) {
+                            var ev = cellData[key];
+                            ev._id = key;
+                            
+                            if (ev.groupId) {
+                                if (shownGroups[ev.groupId]) continue;
+                                shownGroups[ev.groupId] = true;
+                                
+                                var startIdx = timeSlots.indexOf(ev.startTime);
+                                var endIdx = timeSlots.indexOf(ev.endTime);
+                                if (startIdx >= 0 && endIdx >= startIdx) {
+                                    mergedEvents[dateKey].push({
+                                        event: ev,
+                                        top: startIdx * CELL_HEIGHT,
+                                        height: (endIdx - startIdx + 1) * CELL_HEIGHT,
+                                        startIdx: startIdx,
+                                        endIdx: endIdx
+                                    });
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Строки времени
             for (var t = 0; t < timeSlots.length; t++) {
                 var timeKey = timeSlots[t];
                 html += '<div class="schedule-row">';
@@ -165,75 +208,66 @@ function initApp(user) {
                     var eventKey = dateKey + '_' + timeKey;
                     var todayCol = isToday(weekDates[dayIdx]) ? ' today-column' : '';
                     
-                    var cellData = events[eventKey] || {};
-                    var cellEvents = [];
-                    var shownGroupIds = [];
-                    
-                    for (var key in cellData) {
-                        if (cellData.hasOwnProperty(key)) {
-                            var ev = cellData[key];
-                            ev._id = key;
-                            
-                            if (ev.groupId && shownGroupIds.indexOf(ev.groupId) >= 0) {
-                                continue;
-                            }
-                            if (ev.groupId) {
-                                shownGroupIds.push(ev.groupId);
-                            }
-                            
-                            cellEvents.push(ev);
-                        }
-                    }
-                    
-                    if (!viewAllUsers) {
-                        cellEvents = cellEvents.filter(function(ev) { return ev.user === currentUserId; });
-                    }
-                    
-                    var groupClass = '';
-                    if (cellEvents.length > 0 && cellEvents[0].groupId && cellEvents[0].spanCount > 1) {
-                        groupClass = ' group-cell';
-                    }
-                    
-                    html += '<div class="schedule-cell' + todayCol + groupClass + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
-                    
-                    for (var e = 0; e < cellEvents.length; e++) {
-                        var ev = cellEvents[e];
-                        var chipClass = 'event-chip';
-                        
-                        if (ev.groupId && ev.spanCount > 1) {
-                            var currentTimeIndex = timeSlots.indexOf(timeKey);
-                            var startTimeIndex = timeSlots.indexOf(ev.startTime);
-                            var endTimeIndex = timeSlots.indexOf(ev.endTime);
-                            
-                            if (currentTimeIndex === startTimeIndex && currentTimeIndex === endTimeIndex) {
-                                chipClass += ' group-single';
-                            } else if (currentTimeIndex === startTimeIndex) {
-                                chipClass += ' group-first';
-                            } else if (currentTimeIndex === endTimeIndex) {
-                                chipClass += ' group-last';
-                            } else {
-                                chipClass += ' group-middle';
-                            }
-                        }
-                        
-                        html += '<div class="' + chipClass + '" style="background:' + (ev.color || '#607D8B') + ';" data-event-id="' + (ev._id || '') + '" data-group-id="' + (ev.groupId || '') + '">';
-                        
-                        if (!ev.groupId || ev.startTime === timeKey || ev.spanCount === 1) {
-                            html += '<div class="event-chip-title">' + escapeHtml(ev.title) + '</div>';
-                            if (ev.patient) html += '<div class="event-chip-patient">' + escapeHtml(ev.patient) + '</div>';
-                            if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
-                        }
-                        if (ev.spanCount && ev.spanCount > 1 && ev.startTime === timeKey) {
-                            html += '<div class="event-chip-time">⏱ ' + ev.startTime + ' — ' + ev.endTime + '</div>';
-                        }
-                        html += '</div>';
-                    }
-                    
+                    html += '<div class="schedule-cell' + todayCol + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
                     html += '</div>';
                 }
                 html += '</div>';
             }
+            
             scheduleTable.innerHTML = html;
+            
+            // Теперь добавляем объединённые события поверх ячеек
+            for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
+                var dateKey = formatDate(weekDates[dayIdx]);
+                var colMerged = mergedEvents[dateKey] || [];
+                
+                // Находим колонку
+                var columnCells = document.querySelectorAll('.schedule-cell[data-date="' + dateKey + '"]');
+                
+                if (columnCells.length > 0) {
+                    // Создаём контейнер для наложения
+                    var firstCell = columnCells[0];
+                    var columnContainer = firstCell.parentElement;
+                    
+                    colMerged.forEach(function(merged) {
+                        if (!viewAllUsers && merged.event.user !== currentUserId) return;
+                        
+                        var overlay = document.createElement('div');
+                        overlay.className = 'merged-event-overlay';
+                        overlay.style.cssText = 
+                            'background:' + (merged.event.color || '#607D8B') + ';' +
+                            'top:' + merged.top + 'px;' +
+                            'height:' + merged.height + 'px;' +
+                            'position:absolute;' +
+                            'left:0;right:0;' +
+                            'border-radius:8px;' +
+                            'padding:8px 10px;' +
+                            'color:white;' +
+                            'font-size:12px;' +
+                            'cursor:pointer;' +
+                            'z-index:10;' +
+                            'overflow:hidden;' +
+                            'box-shadow:0 2px 8px rgba(0,0,0,0.2);';
+                        
+                        overlay.innerHTML = 
+                            '<div style="font-weight:700;margin-bottom:2px;">' + escapeHtml(merged.event.title) + '</div>' +
+                            (merged.event.patient ? '<div style="font-size:10px;opacity:0.9;">' + escapeHtml(merged.event.patient) + '</div>' : '') +
+                            (merged.event.type ? '<div style="font-size:10px;opacity:0.8;">' + getEventTypeLabel(merged.event.type) + '</div>' : '') +
+                            '<div style="font-size:10px;opacity:0.8;">⏱ ' + merged.event.startTime + ' — ' + merged.event.endTime + '</div>';
+                        
+                        overlay.addEventListener('click', function(e) {
+                            e.stopPropagation();
+                            var ek = dateKey + '_' + merged.event.startTime;
+                            openEditModal(ek, merged.event._id, merged.event);
+                        });
+                        
+                        // Вставляем overlay в первую ячейку колонки
+                        firstCell.style.position = 'relative';
+                        firstCell.appendChild(overlay);
+                    });
+                }
+            }
+            
             addClickHandlers();
         });
     }
@@ -241,7 +275,7 @@ function initApp(user) {
     function addClickHandlers() {
         document.querySelectorAll('.schedule-cell').forEach(function(cell) {
             cell.addEventListener('click', function(e) {
-                if (e.target.closest('.event-chip')) return;
+                if (e.target.closest('.merged-event-overlay') || e.target.closest('.event-chip')) return;
                 
                 var date = this.dataset.date;
                 var time = this.dataset.time;
@@ -249,19 +283,6 @@ function initApp(user) {
                 
                 selectedCell = { date: date, time: time, eventKey: eventKey };
                 openNewModal();
-            });
-        });
-        
-        document.querySelectorAll('.event-chip').forEach(function(chip) {
-            chip.addEventListener('click', function(e) {
-                e.stopPropagation();
-                var cell = this.closest('.schedule-cell');
-                var ek = cell.dataset.eventKey;
-                var evId = this.dataset.eventId;
-                
-                if (events[ek] && events[ek][evId]) {
-                    openEditModal(ek, evId, events[ek][evId]);
-                }
             });
         });
         
