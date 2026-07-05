@@ -152,9 +152,20 @@ function initApp(user) {
             }
             html += '</div>';
             
-            for (var h = 8; h <= 21; h++) {
-                html += '<div class="schedule-row">';
-                html += '<div class="time-cell">' + String(h).padStart(2, '0') + ':00</div>';
+            // Генерируем временные слоты с 09:00 до 20:00 с шагом 30 минут
+var timeSlots = [];
+for (var h = 9; h <= 20; h++) {
+    timeSlots.push(String(h).padStart(2, '0') + ':00');
+    if (h < 20) {
+        timeSlots.push(String(h).padStart(2, '0') + ':30');
+    }
+}
+
+// Отрисовываем строки для каждого временного слота
+for (var t = 0; t < timeSlots.length; t++) {
+    var timeKey = timeSlots[t];
+    html += '<div class="schedule-row">';
+    html += '<div class="time-cell">' + timeKey + '</div>';
                 for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
                     var dateKey = formatDate(weekDates[dayIdx]);
                     var timeKey = String(h).padStart(2, '0') + ':00';
