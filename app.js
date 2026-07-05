@@ -12,18 +12,13 @@ function initApp(user) {
         return;
     }
     
-    // Переменные
     var currentUserId = user.id;
     var viewAllUsers = false;
     var currentStartDate = new Date();
     var events = {};
     var editingEvent = null;
     var selectedCell = null;
-    var isSelectingMode = false;
-    var selectedCells = [];
-    var selectionStart = null;
     
-    // DOM элементы
     var userSelect = document.getElementById('userSelect');
     var datePicker = document.getElementById('datePicker');
     var dateRangeDisplay = document.getElementById('dateRangeDisplay');
@@ -52,7 +47,7 @@ function initApp(user) {
         'user2': { name: 'Казарьянц Э.А.', spec: 'Ортопед' }
     };
     
-    // Генерируем временные слоты
+    // Временные слоты
     var timeSlots = [];
     for (var h = 9; h <= 20; h++) {
         timeSlots.push(String(h).padStart(2, '0') + ':00');
@@ -139,34 +134,6 @@ function initApp(user) {
         return div.innerHTML;
     }
     
-    // Проверяем, занята ли ячейка
-    function isCellOccupied(dateKey, timeKey) {
-        var eventKey = dateKey + '_' + timeKey;
-        var cellData = events[eventKey] || {};
-        var count = 0;
-        for (var k in cellData) {
-            if (cellData.hasOwnProperty(k)) count++;
-        }
-        return count > 0;
-    }
-    
-    // Подсветка выбранных ячеек
-    function highlightSelectedCells() {
-        document.querySelectorAll('.schedule-cell').forEach(function(cell) {
-            var date = cell.dataset.date;
-            var time = cell.dataset.time;
-            cell.classList.remove('selected-range');
-        });
-        
-        selectedCells.forEach(function(c) {
-            var selector = '.schedule-cell[data-date="' + c.date + '"][data-time="' + c.time + '"]';
-            var cell = document.querySelector(selector);
-            if (cell) {
-                cell.classList.add('selected-range');
-            }
-        });
-    }
-    
     function renderSchedule() {
         loadEvents(function(loadedEvents) {
             events = loadedEvents;
@@ -189,9 +156,6 @@ function initApp(user) {
             }
             html += '</div>';
             
-            // Подсказка
-            html += '<div class="selection-hint">💡 Зажмите Shift и кликните на вторую ячейку, чтобы объединить</div>';
-            
             for (var t = 0; t < timeSlots.length; t++) {
                 var timeKey = timeSlots[t];
                 html += '<div class="schedule-row">';
@@ -204,7 +168,6 @@ function initApp(user) {
                     
                     html += '<div class="schedule-cell' + todayCol + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
                     
-                    // Проверяем объединённые события
                     var cellData = events[eventKey] || {};
                     var cellEvents = [];
                     var shownGroupIds = [];
@@ -214,9 +177,8 @@ function initApp(user) {
                             var ev = cellData[key];
                             ev._id = key;
                             
-                            // Проверяем, часть ли это объединённого события
                             if (ev.groupId && shownGroupIds.indexOf(ev.groupId) >= 0) {
-                                continue; // Уже показали это событие
+                                continue;
                             }
                             if (ev.groupId) {
                                 shownGroupIds.push(ev.groupId);
@@ -234,10 +196,8 @@ function initApp(user) {
                         var ev = cellEvents[e];
                         var chipStyle = 'background:' + (ev.color || '#607D8B') + ';';
                         
-                        // Если это объединённое событие — делаем чип выше
-                        if (ev.groupId) {
-                            chipStyle += 'min-height:' + (ev.spanCount * 30) + 'px;';
-                            chipStyle += 'z-index:10;';
+                        if (ev.spanCount && ev.spanCount > 1) {
+                            chipStyle += 'min-height:' + (ev.spanCount * 28) + 'px;';
                         }
                         
                         html += '<div class="event-chip" style="' + chipStyle + '" data-event-id="' + (ev._id || '') + '" data-group-id="' + (ev.groupId || '') + '">';
@@ -245,7 +205,7 @@ function initApp(user) {
                         if (ev.patient) html += '<div class="event-chip-patient">' + escapeHtml(ev.patient) + '</div>';
                         if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
                         if (ev.spanCount && ev.spanCount > 1) {
-                            html += '<div class="event-chip-time">⏱ ' + ev.spanCount + ' слотов</div>';
+                            html += '<div class="event-chip-time">⏱ ' + ev.startTime + ' — ' + ev.endTime + '</div>';
                         }
                         html += '</div>';
                     }
@@ -256,8 +216,6 @@ function initApp(user) {
             }
             scheduleTable.innerHTML = html;
             addClickHandlers();
-            selectedCells = [];
-            isSelectingMode = false;
         });
     }
     
@@ -270,42 +228,7 @@ function initApp(user) {
                 var time = this.dataset.time;
                 var eventKey = this.dataset.eventKey;
                 
-                // Проверка на Shift для множественного выбора
-                if (e.shiftKey && selectedCells.length === 1) {
-                    // Выбираем диапазон ячеек
-                    var first = selectedCells[0];
-                    var dateIndex1 = getWeekDates(currentStartDate).map(function(d) { return formatDate(d); }).indexOf(first.date);
-                    var dateIndex2 = getWeekDates(currentStartDate).map(function(d) { return formatDate(d); }).indexOf(date);
-                    var timeIndex1 = timeSlots.indexOf(first.time);
-                    var timeIndex2 = timeSlots.indexOf(time);
-                    
-                    // Выбираем все ячейки в диапазоне
-                    selectedCells = [];
-                    var minDate = Math.min(dateIndex1, dateIndex2);
-                    var maxDate = Math.max(dateIndex1, dateIndex2);
-                    var minTime = Math.min(timeIndex1, timeIndex2);
-                    var maxTime = Math.max(timeIndex1, timeIndex2);
-                    
-                    var weekDates = getWeekDates(currentStartDate);
-                    for (var d = minDate; d <= maxDate; d++) {
-                        for (var t = minTime; t <= maxTime; t++) {
-                            selectedCells.push({
-                                date: formatDate(weekDates[d]),
-                                time: timeSlots[t]
-                            });
-                        }
-                    }
-                    
-                    highlightSelectedCells();
-                    return;
-                }
-                
-                // Обычный клик — выбираем одну ячейку
-                selectedCells = [{ date: date, time: time, eventKey: eventKey }];
                 selectedCell = { date: date, time: time, eventKey: eventKey };
-                highlightSelectedCells();
-                
-                // Открываем модальное окно
                 openNewModal();
             });
         });
@@ -316,12 +239,8 @@ function initApp(user) {
                 var cell = this.closest('.schedule-cell');
                 var ek = cell.dataset.eventKey;
                 var evId = this.dataset.eventId;
-                var groupId = this.dataset.groupId;
                 
-                if (groupId && events[ek] && events[ek][evId]) {
-                    // Открываем событие из любой ячейки группы
-                    openEditModal(ek, evId, events[ek][evId]);
-                } else if (events[ek] && events[ek][evId]) {
+                if (events[ek] && events[ek][evId]) {
                     openEditModal(ek, evId, events[ek][evId]);
                 }
             });
@@ -335,22 +254,53 @@ function initApp(user) {
         });
     }
     
-    function openNewModal() {
-        var timeRange = '';
-        if (selectedCells.length === 1) {
-            timeRange = selectedCells[0].date + ' ' + selectedCells[0].time;
-        } else if (selectedCells.length > 1) {
-            // Сортируем по времени
-            var sorted = selectedCells.slice().sort(function(a, b) {
-                return timeSlots.indexOf(a.time) - timeSlots.indexOf(b.time);
+    // Добавляем поля выбора времени в модальное окно
+    function addTimeSelects() {
+        // Проверяем, есть ли уже поля
+        if (document.getElementById('eventStartTime')) return;
+        
+        var formGroups = document.querySelectorAll('.modal-content .form-group');
+        var phoneGroup = null;
+        
+        formGroups.forEach(function(group) {
+            if (group.querySelector('#eventPhone')) {
+                phoneGroup = group;
+            }
+        });
+        
+        if (phoneGroup) {
+            // Создаём контейнер для выбора времени
+            var timeContainer = document.createElement('div');
+            timeContainer.className = 'form-group';
+            timeContainer.innerHTML = `
+                <label>Время начала и конца:</label>
+                <div class="time-range-select">
+                    <select id="eventStartTime" class="time-select"></select>
+                    <span class="time-separator">—</span>
+                    <select id="eventEndTime" class="time-select"></select>
+                </div>
+            `;
+            
+            phoneGroup.parentNode.insertBefore(timeContainer, phoneGroup.nextSibling);
+            
+            // Заполняем списки времени
+            var startSelect = document.getElementById('eventStartTime');
+            var endSelect = document.getElementById('eventEndTime');
+            
+            timeSlots.forEach(function(t) {
+                startSelect.innerHTML += '<option value="' + t + '">' + t + '</option>';
+                endSelect.innerHTML += '<option value="' + t + '">' + t + '</option>';
             });
-            timeRange = sorted[0].date + ' ' + sorted[0].time + ' — ' + sorted[sorted.length - 1].time;
         }
+    }
+    
+    function openNewModal() {
+        addTimeSelects();
         
         editingEvent = { 
+            eventKey: selectedCell.eventKey, 
             isNew: true,
-            cells: selectedCells.slice(),
-            spanCount: selectedCells.length
+            date: selectedCell.date
         };
         
         eventName.value = '';
@@ -359,13 +309,28 @@ function initApp(user) {
         eventType.value = 'consultation';
         eventColor.value = userColors[currentUserId] || '#607D8B';
         eventComment.value = '';
-        modalTitle.textContent = 'Новая запись - ' + timeRange;
+        
+        // Устанавливаем время
+        var startSelect = document.getElementById('eventStartTime');
+        var endSelect = document.getElementById('eventEndTime');
+        
+        if (startSelect) startSelect.value = selectedCell.time;
+        if (endSelect) {
+            // По умолчанию конец = начало + 30 минут
+            var currentIndex = timeSlots.indexOf(selectedCell.time);
+            var nextIndex = Math.min(currentIndex + 1, timeSlots.length - 1);
+            endSelect.value = timeSlots[nextIndex];
+        }
+        
+        modalTitle.textContent = 'Новая запись - ' + selectedCell.date;
         deleteEventBtn.style.display = 'none';
         eventModal.style.display = 'block';
         eventName.focus();
     }
     
     function openEditModal(ek, evId, evData) {
+        addTimeSelects();
+        
         editingEvent = { eventKey: ek, eventId: evId, event: evData, isNew: false };
         eventName.value = evData.title || '';
         eventPatient.value = evData.patient || '';
@@ -373,6 +338,14 @@ function initApp(user) {
         eventType.value = evData.type || 'consultation';
         eventColor.value = evData.color || '#607D8B';
         eventComment.value = evData.comment || '';
+        
+        // Устанавливаем время для редактирования
+        var startSelect = document.getElementById('eventStartTime');
+        var endSelect = document.getElementById('eventEndTime');
+        
+        if (startSelect && evData.startTime) startSelect.value = evData.startTime;
+        if (endSelect && evData.endTime) endSelect.value = evData.endTime;
+        
         modalTitle.textContent = 'Редактировать запись';
         deleteEventBtn.style.display = 'inline-block';
         eventModal.style.display = 'block';
@@ -382,22 +355,41 @@ function initApp(user) {
         eventModal.style.display = 'none';
         editingEvent = null;
         selectedCell = null;
-        selectedCells = [];
-        highlightSelectedCells();
+    }
+    
+    function getCellsInRange(date, startTime, endTime) {
+        var startIndex = timeSlots.indexOf(startTime);
+        var endIndex = timeSlots.indexOf(endTime);
+        
+        if (startIndex < 0 || endIndex < 0 || startIndex > endIndex) {
+            return [{ date: date, time: startTime }];
+        }
+        
+        var cells = [];
+        for (var i = startIndex; i <= endIndex; i++) {
+            cells.push({ date: date, time: timeSlots[i] });
+        }
+        return cells;
     }
     
     function saveEvent() {
         var title = eventName.value.trim();
         if (!title) { alert('Введите название'); eventName.focus(); return; }
         
+        var startTime = document.getElementById('eventStartTime') ? document.getElementById('eventStartTime').value : selectedCell.time;
+        var endTime = document.getElementById('eventEndTime') ? document.getElementById('eventEndTime').value : startTime;
+        var date = editingEvent.date || selectedCell.date;
+        
+        var cells = getCellsInRange(date, startTime, endTime);
+        
         setStatus('syncing', 'Сохранение...');
         
         var groupId = Date.now().toString();
         var promises = [];
         
-        if (editingEvent.isNew && editingEvent.cells && editingEvent.cells.length > 0) {
-            // Сохраняем событие во все выбранные ячейки
-            editingEvent.cells.forEach(function(cell, index) {
+        if (editingEvent.isNew) {
+            // Сохраняем во все ячейки диапазона
+            cells.forEach(function(cell, index) {
                 var eventKey = cell.date + '_' + cell.time;
                 var eventId = groupId + '_' + index;
                 
@@ -410,14 +402,16 @@ function initApp(user) {
                     comment: eventComment.value.trim(),
                     user: currentUserId,
                     groupId: groupId,
-                    spanCount: editingEvent.cells.length,
+                    spanCount: cells.length,
+                    startTime: startTime,
+                    endTime: endTime,
                     createdAt: new Date().toISOString()
                 };
                 
                 promises.push(db.ref('events/' + eventKey + '/' + eventId).set(data));
             });
-        } else if (!editingEvent.isNew) {
-            // Обновляем существующее
+        } else {
+            // Обновление существующего
             var data = {
                 title: title,
                 patient: eventPatient.value.trim(),
@@ -428,6 +422,8 @@ function initApp(user) {
                 user: editingEvent.event.user,
                 groupId: editingEvent.event.groupId || null,
                 spanCount: editingEvent.event.spanCount || 1,
+                startTime: startTime,
+                endTime: endTime,
                 createdAt: editingEvent.event.createdAt || new Date().toISOString()
             };
             
@@ -452,7 +448,6 @@ function initApp(user) {
         var groupId = editingEvent.event.groupId;
         
         if (groupId) {
-            // Удаляем все события группы
             var promises = [];
             for (var key in events) {
                 if (events.hasOwnProperty(key)) {
@@ -509,16 +504,8 @@ function initApp(user) {
     document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
     eventModal.addEventListener('click', function(e) { if (e.target === eventModal) closeModal(); });
     
-    // Сброс выделения по Escape
     document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            if (eventModal.style.display === 'block') {
-                closeModal();
-            } else {
-                selectedCells = [];
-                highlightSelectedCells();
-            }
-        }
+        if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal();
     });
     
     // ЗАПУСК
