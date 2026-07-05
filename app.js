@@ -1,10 +1,17 @@
 // ========== ФУНКЦИЯ ЗАПУСКА ПРИЛОЖЕНИЯ ==========
+// Вызывается из auth.js после успешного входа
+
 function initApp(user) {
     
     console.log('🚀 Запуск приложения для:', user.name);
     
-    if (typeof firebase === 'undefined' || typeof db === 'undefined') {
-        document.getElementById('syncText').textContent = 'Ошибка подключения';
+    // Проверки
+    if (typeof firebase === 'undefined') {
+        document.getElementById('syncText').textContent = 'Ошибка: Firebase не загружен';
+        return;
+    }
+    if (typeof db === 'undefined') {
+        document.getElementById('syncText').textContent = 'Ошибка: база данных не подключена';
         return;
     }
     
@@ -16,7 +23,7 @@ function initApp(user) {
     var editingEvent = null;
     var selectedCell = null;
     
-    // DOM
+    // DOM элементы
     var userSelect = document.getElementById('userSelect');
     var datePicker = document.getElementById('datePicker');
     var dateRangeDisplay = document.getElementById('dateRangeDisplay');
@@ -45,7 +52,6 @@ function initApp(user) {
         'user2': { name: 'Казарьянц Э.А.', spec: 'Ортопед' }
     };
     
-    // Установка пользователя
     userSelect.value = currentUserId;
     
     function setStatus(status, text) {
@@ -54,11 +60,7 @@ function initApp(user) {
     }
     
     db.ref('.info/connected').on('value', function(snap) {
-        if (snap.val() === true) {
-            setStatus('online', 'Подключено');
-        } else {
-            setStatus('offline', 'Нет подключения');
-        }
+        setStatus(snap.val() === true ? 'online' : 'offline', snap.val() === true ? 'Подключено' : 'Нет подключения');
     });
     
     function loadEvents(callback) {
@@ -131,7 +133,6 @@ function initApp(user) {
     function renderSchedule() {
         loadEvents(function(loadedEvents) {
             events = loadedEvents;
-            
             var weekDates = getWeekDates(currentStartDate);
             dateRangeDisplay.textContent = 
                 weekDates[0].getDate() + ' ' + getMonthName(weekDates[0]) + 
@@ -139,14 +140,11 @@ function initApp(user) {
             datePicker.value = formatDate(currentStartDate);
             
             var html = '';
-            
             html += '<div class="date-headers">';
             html += '<div class="time-header-cell">Время</div>';
-            
             for (var i = 0; i < 7; i++) {
                 var d = weekDates[i];
-                var cls = isToday(d) ? ' today' : '';
-                html += '<div class="date-header-cell' + cls + '" data-date="' + formatDate(d) + '">';
+                html += '<div class="date-header-cell' + (isToday(d) ? ' today' : '') + '" data-date="' + formatDate(d) + '">';
                 html += '<div class="date-day-name">' + getDayName(d) + '</div>';
                 html += '<div class="date-day-number">' + d.getDate() + '</div>';
                 html += '<div class="date-month">' + getMonthName(d) + '</div>';
@@ -157,18 +155,14 @@ function initApp(user) {
             for (var h = 8; h <= 21; h++) {
                 html += '<div class="schedule-row">';
                 html += '<div class="time-cell">' + String(h).padStart(2, '0') + ':00</div>';
-                
                 for (var dayIdx = 0; dayIdx < 7; dayIdx++) {
                     var dateKey = formatDate(weekDates[dayIdx]);
                     var timeKey = String(h).padStart(2, '0') + ':00';
                     var eventKey = dateKey + '_' + timeKey;
-                    var todayCol = isToday(weekDates[dayIdx]) ? ' today-column' : '';
-                    
-                    html += '<div class="schedule-cell' + todayCol + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
+                    html += '<div class="schedule-cell' + (isToday(weekDates[dayIdx]) ? ' today-column' : '') + '" data-date="' + dateKey + '" data-time="' + timeKey + '" data-event-key="' + eventKey + '">';
                     
                     var cellData = events[eventKey] || {};
                     var cellEvents = [];
-                    
                     for (var key in cellData) {
                         if (cellData.hasOwnProperty(key)) {
                             var ev = cellData[key];
@@ -176,13 +170,9 @@ function initApp(user) {
                             cellEvents.push(ev);
                         }
                     }
-                    
                     if (!viewAllUsers) {
-                        cellEvents = cellEvents.filter(function(ev) {
-                            return ev.user === currentUserId;
-                        });
+                        cellEvents = cellEvents.filter(function(ev) { return ev.user === currentUserId; });
                     }
-                    
                     for (var e = 0; e < cellEvents.length; e++) {
                         var ev = cellEvents[e];
                         html += '<div class="event-chip" style="background:' + (ev.color || '#607D8B') + '" data-event-id="' + (ev._id || '') + '">';
@@ -191,12 +181,10 @@ function initApp(user) {
                         if (ev.type) html += '<div class="event-chip-time">' + getEventTypeLabel(ev.type) + '</div>';
                         html += '</div>';
                     }
-                    
                     html += '</div>';
                 }
                 html += '</div>';
             }
-            
             scheduleTable.innerHTML = html;
             addClickHandlers();
         });
@@ -206,27 +194,19 @@ function initApp(user) {
         document.querySelectorAll('.schedule-cell').forEach(function(cell) {
             cell.addEventListener('click', function(e) {
                 if (e.target.closest('.event-chip')) return;
-                selectedCell = {
-                    date: this.dataset.date,
-                    time: this.dataset.time,
-                    eventKey: this.dataset.eventKey
-                };
+                selectedCell = { date: this.dataset.date, time: this.dataset.time, eventKey: this.dataset.eventKey };
                 openNewModal();
             });
         });
-        
         document.querySelectorAll('.event-chip').forEach(function(chip) {
             chip.addEventListener('click', function(e) {
                 e.stopPropagation();
                 var cell = this.closest('.schedule-cell');
                 var ek = cell.dataset.eventKey;
                 var evId = this.dataset.eventId;
-                if (events[ek] && events[ek][evId]) {
-                    openEditModal(ek, evId, events[ek][evId]);
-                }
+                if (events[ek] && events[ek][evId]) openEditModal(ek, evId, events[ek][evId]);
             });
         });
-        
         document.querySelectorAll('.date-header-cell').forEach(function(hdr) {
             hdr.addEventListener('click', function() {
                 currentStartDate = new Date(this.dataset.date + 'T00:00:00');
@@ -268,14 +248,9 @@ function initApp(user) {
         selectedCell = null;
     }
     
-    function makeId() {
-        return 'evt_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
-    }
-    
     function saveEvent() {
         var title = eventName.value.trim();
         if (!title) { alert('Введите название'); eventName.focus(); return; }
-        
         var data = {
             title: title,
             patient: eventPatient.value.trim(),
@@ -286,30 +261,20 @@ function initApp(user) {
             user: currentUserId,
             createdAt: new Date().toISOString()
         };
-        
         setStatus('syncing', 'Сохранение...');
-        
-        var refPath;
-        if (editingEvent.isNew) {
-            refPath = 'events/' + editingEvent.eventKey + '/' + makeId();
-        } else {
-            refPath = 'events/' + editingEvent.eventKey + '/' + editingEvent.eventId;
-        }
-        
+        var refPath = editingEvent.isNew ? 
+            'events/' + editingEvent.eventKey + '/' + Date.now() :
+            'events/' + editingEvent.eventKey + '/' + editingEvent.eventId;
         db.ref(refPath).set(data).then(function() {
             setStatus('online', 'Сохранено!');
             closeModal();
             renderSchedule();
-        }).catch(function(error) {
-            setStatus('offline', 'Ошибка');
-            alert('Ошибка: ' + error.message);
-        });
+        }).catch(function(e) { alert('Ошибка: ' + e.message); });
     }
     
     function deleteEvent() {
         if (!editingEvent || editingEvent.isNew) { closeModal(); return; }
-        if (!confirm('Удалить запись "' + editingEvent.event.title + '"?')) return;
-        
+        if (!confirm('Удалить запись?')) return;
         setStatus('syncing', 'Удаление...');
         db.ref('events/' + editingEvent.eventKey + '/' + editingEvent.eventId).remove().then(function() {
             setStatus('online', 'Удалено');
@@ -318,47 +283,23 @@ function initApp(user) {
         });
     }
     
-    // Кнопки навигации
-    document.getElementById('prevDay').addEventListener('click', function() {
-        currentStartDate.setDate(currentStartDate.getDate() - 1);
-        renderSchedule();
-    });
-    document.getElementById('nextDay').addEventListener('click', function() {
-        currentStartDate.setDate(currentStartDate.getDate() + 1);
-        renderSchedule();
-    });
-    document.getElementById('prevWeek').addEventListener('click', function() {
-        currentStartDate.setDate(currentStartDate.getDate() - 7);
-        renderSchedule();
-    });
-    document.getElementById('nextWeek').addEventListener('click', function() {
-        currentStartDate.setDate(currentStartDate.getDate() + 7);
-        renderSchedule();
-    });
-    document.getElementById('todayBtn').addEventListener('click', function() {
-        currentStartDate = new Date();
-        renderSchedule();
-    });
-    document.getElementById('syncBtn').addEventListener('click', function() {
-        renderSchedule();
-    });
+    // Навигация
+    document.getElementById('prevDay').addEventListener('click', function() { currentStartDate.setDate(currentStartDate.getDate() - 1); renderSchedule(); });
+    document.getElementById('nextDay').addEventListener('click', function() { currentStartDate.setDate(currentStartDate.getDate() + 1); renderSchedule(); });
+    document.getElementById('prevWeek').addEventListener('click', function() { currentStartDate.setDate(currentStartDate.getDate() - 7); renderSchedule(); });
+    document.getElementById('nextWeek').addEventListener('click', function() { currentStartDate.setDate(currentStartDate.getDate() + 7); renderSchedule(); });
+    document.getElementById('todayBtn').addEventListener('click', function() { currentStartDate = new Date(); renderSchedule(); });
+    document.getElementById('syncBtn').addEventListener('click', function() { renderSchedule(); });
     
     datePicker.addEventListener('change', function() {
-        if (this.value) {
-            currentStartDate = new Date(this.value + 'T00:00:00');
-            renderSchedule();
-        }
+        if (this.value) { currentStartDate = new Date(this.value + 'T00:00:00'); renderSchedule(); }
     });
     
-    // Переключение специалиста
     userSelect.addEventListener('change', function() {
         currentUserId = this.value;
-        
-        // Обновляем отображение
         var u = userNames[currentUserId];
         currentUserName.textContent = '👤 ' + u.name + ' (' + u.spec + ')';
         headerSubtitle.textContent = 'График работы - ' + u.spec;
-        
         renderSchedule();
     });
     
@@ -368,21 +309,13 @@ function initApp(user) {
         renderSchedule();
     });
     
-    // Модальное окно
     document.querySelector('.close-btn').addEventListener('click', closeModal);
     document.getElementById('cancelEventBtn').addEventListener('click', closeModal);
     document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
     document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
-    
-    eventModal.addEventListener('click', function(e) {
-        if (e.target === eventModal) closeModal();
-    });
-    
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal();
-    });
+    eventModal.addEventListener('click', function(e) { if (e.target === eventModal) closeModal(); });
     
     // ЗАПУСК
-    setStatus('syncing', 'Загрузка...');
+    setStatus('online', 'Готово');
     renderSchedule();
 }
