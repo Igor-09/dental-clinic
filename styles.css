@@ -777,3 +777,34 @@ body {
     font-weight: bold;
     color: #555;
 }
+/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ ========== */
+.event-chip[data-group-id]:not([data-group-id=""]) {
+    border-radius: 0 !important;
+    margin: 0 !important;
+    border-bottom: 1px solid rgba(255,255,255,0.3) !important;
+}
+
+/* Первая ячейка объединённого события */
+.schedule-cell:has(.event-chip[data-group-id]:not([data-group-id=""])) + .schedule-cell:not(:has(.event-chip[data-group-id])) {
+    /* Это первая ячейка группы */
+}
+
+.event-chip.group-first {
+    border-radius: 6px 6px 0 0 !important;
+    margin-top: 2px !important;
+}
+
+.event-chip.group-last {
+    border-radius: 0 0 6px 6px !important;
+    border-bottom: none !important;
+}
+
+.event-chip.group-single {
+    border-radius: 6px !important;
+}
+
+/* Убираем отступы между ячейками одного события */
+.schedule-cell.group-cell {
+    padding: 0 !important;
+    border-bottom: none !important;
+}
