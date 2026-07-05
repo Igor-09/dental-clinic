@@ -1,107 +1,3 @@
-/* ========== ЭКРАН ВХОДА ========== */
-.login-screen {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, #37474F 0%, #455A64 40%, #546E7A 70%, #607D8B 100%);
-    z-index: 9999;
-    padding: 20px;
-}
-
-.login-card {
-    background: white;
-    border-radius: 20px;
-    padding: 40px;
-    width: 100%;
-    max-width: 420px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    text-align: center;
-    animation: fadeIn 0.3s;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-.login-logo .tooth-icon {
-    font-size: 48px;
-    display: block;
-    margin-bottom: 10px;
-}
-
-.login-logo h1 {
-    font-size: 24px;
-    color: #37474F;
-    margin-bottom: 5px;
-}
-
-.login-logo p {
-    color: #999;
-    font-size: 14px;
-    margin-bottom: 25px;
-}
-
-.login-form .form-group {
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-.login-form label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
-    font-size: 13px;
-    color: #555;
-}
-
-.login-form input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
-    font-size: 15px;
-    font-family: inherit;
-}
-
-.login-form input:focus {
-    outline: none;
-    border-color: #607D8B;
-}
-
-.btn-login {
-    width: 100%;
-    padding: 14px;
-    background: #455A64;
-    color: white;
-    border: none;
-    border-radius: 10px;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.btn-login:hover {
-    background: #37474F;
-}
-
-.login-error {
-    display: none;
-    color: #f44336;
-    text-align: center;
-    margin-top: 15px;
-    font-size: 14px;
-    font-weight: 600;
-    padding: 10px;
-    background: #ffebee;
-    border-radius: 8px;
-}
 * {
     margin: 0;
     padding: 0;
@@ -112,267 +8,194 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     color: #333;
+    background: #f5f5f5;
 }
 
-/* Фон - стоматологическая клиника */
+/* ========== ЭКРАН ВХОДА ========== */
+.login-screen {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #37474F, #607D8B);
+    z-index: 9999;
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.login-logo .tooth-icon { font-size: 50px; }
+.login-logo h1 { color: #37474F; margin: 10px 0; font-size: 22px; }
+.login-logo p { color: #999; margin-bottom: 25px; }
+
+.login-form input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #455A64;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.login-error {
+    display: none;
+    color: #f44336;
+    margin-top: 15px;
+    font-weight: 600;
+    padding: 10px;
+    background: #ffebee;
+    border-radius: 8px;
+}
+
+/* ========== ОСНОВНОЕ ПРИЛОЖЕНИЕ ========== */
 .app-background {
     min-height: 100vh;
-    background: 
-        linear-gradient(
-            rgba(255, 255, 255, 0.92),
-            rgba(255, 255, 255, 0.92)
-        ),
-        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400"><rect fill="%23f5f5f5" width="400" height="400"/><circle cx="200" cy="180" r="80" fill="%23e0e0e0" opacity="0.5"/><circle cx="160" cy="140" r="40" fill="%23bdbdbd" opacity="0.3"/><circle cx="240" cy="140" r="40" fill="%23bdbdbd" opacity="0.3"/><rect x="160" y="220" width="80" height="120" rx="10" fill="%23e0e0e0" opacity="0.4"/><text x="200" y="320" text-anchor="middle" fill="%23757575" font-size="24" font-weight="bold">🦷</text></svg>');
-    background-size: 300px 300px;
+    background: #f5f5f5;
     padding: 10px;
 }
 
 .container {
     max-width: 1400px;
     margin: 0 auto;
-    background: rgba(255, 255, 255, 0.95);
+    background: white;
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
     overflow: hidden;
-    border: 1px solid rgba(117, 117, 117, 0.2);
 }
 
-/* Шапка */
 .header {
-    background: linear-gradient(135deg, #37474F 0%, #455A64 40%, #546E7A 70%, #607D8B 100%);
+    background: linear-gradient(135deg, #37474F, #607D8B);
     color: white;
     padding: 15px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: wrap;
-    gap: 15px;
-    position: relative;
-    overflow: hidden;
+    gap: 10px;
 }
 
-.header::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -10%;
-    width: 300px;
-    height: 300px;
-    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-    border-radius: 50%;
-}
-
-.clinic-logo {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-    z-index: 1;
-}
-
-.tooth-icon {
-    font-size: 36px;
-    filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.3));
-}
-
-.header h1 {
-    font-size: 24px;
-    font-weight: 700;
-    letter-spacing: 0.5px;
-}
-
-.clinic-subtitle {
-    font-size: 13px;
-    opacity: 0.9;
-    font-weight: 300;
-}
+.clinic-logo { display: flex; align-items: center; gap: 10px; }
+.tooth-icon { font-size: 32px; }
+.header h1 { font-size: 20px; }
+.clinic-subtitle { font-size: 12px; opacity: 0.9; }
 
 .header-controls {
     display: flex;
-    gap: 12px;
+    gap: 8px;
     align-items: center;
     flex-wrap: wrap;
-    position: relative;
-    z-index: 1;
 }
 
-.user-control {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.user-info {
+    background: rgba(255,255,255,0.2);
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
 }
 
-.user-control label {
-    font-size: 13px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
+.user-control label { font-size: 11px; margin-right: 4px; }
 .user-control select {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 2px solid rgba(255,255,255,0.3);
-    font-size: 13px;
-    background: rgba(255,255,255,0.95);
-    cursor: pointer;
-    min-width: 300px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    border: none;
+    font-size: 11px;
 }
 
-/* Кнопки */
 .btn {
-    padding: 8px 16px;
-    border-radius: 8px;
+    padding: 6px 12px;
+    border-radius: 6px;
     border: none;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
-    transition: all 0.3s;
     white-space: nowrap;
 }
 
-.btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
+.btn-view-all { background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); }
+.btn-logout { background: rgba(244,67,54,0.8); color: white; }
 
-.btn:active {
-    transform: translateY(0);
-}
-
-.btn-view-all {
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 2px solid rgba(255,255,255,0.3);
-}
-
-.btn-view-all:hover {
-    background: rgba(255,255,255,0.3);
-}
-
-.btn-nav {
-    background: #f5f5f5;
-    color: #333;
-    border: 1px solid #ddd;
-}
-
-.btn-nav:hover {
-    background: #e0e0e0;
-}
-
-.btn-today {
-    background: #9E9D24;
-    color: white;
-}
-
-.btn-today:hover {
-    background: #827717;
-}
-
-.btn-save {
-    background: #607D8B;
-    color: white;
-    flex: 1;
-}
-
-.btn-save:hover {
-    background: #455A64;
-}
-
-.btn-delete {
-    background: #f44336;
-    color: white;
-}
-
-.btn-delete:hover {
-    background: #d32f2f;
-}
-
-.btn-cancel {
-    background: #9e9e9e;
-    color: white;
-}
-
-.btn-cancel:hover {
-    background: #757575;
-}
-
-/* Легенда */
 .legend-container {
-    padding: 10px 20px;
+    padding: 8px 15px;
     background: #fafafa;
-    border-bottom: 2px solid #e0e0e0;
-    overflow: hidden;
-}
-
-.legend-scroll {
+    border-bottom: 1px solid #e0e0e0;
     display: flex;
-    gap: 20px;
-    overflow-x: auto;
-    padding: 5px 0;
     justify-content: center;
+    gap: 15px;
 }
 
-.legend-item {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    white-space: nowrap;
-    font-weight: 500;
-}
+.legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.color-box { width: 14px; height: 14px; border-radius: 3px; }
 
-.color-box {
-    width: 18px;
-    height: 18px;
-    border-radius: 4px;
-    flex-shrink: 0;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-/* Навигация */
 .date-nav {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
-    padding: 15px 20px;
+    gap: 6px;
+    padding: 10px;
     background: white;
-    border-bottom: 2px solid #e0e0e0;
+    border-bottom: 1px solid #e0e0e0;
     flex-wrap: wrap;
 }
 
-.date-display {
+.date-nav .btn { padding: 5px 10px; font-size: 11px; background: #f5f5f5; color: #333; }
+.btn-today { background: #9E9D24 !important; color: white !important; }
+.btn-sync { background: #607D8B !important; color: white !important; font-size: 16px !important; }
+
+.date-picker { padding: 5px 8px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px; }
+.date-range-text { font-size: 14px; font-weight: 600; color: #455A64; }
+
+.sync-status {
     display: flex;
     align-items: center;
-    gap: 10px;
+    justify-content: center;
+    gap: 6px;
+    padding: 4px;
+    font-size: 11px;
+    background: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.date-picker {
-    padding: 8px 12px;
-    border-radius: 8px;
-    border: 2px solid #ddd;
-    font-size: 14px;
-    cursor: pointer;
+.sync-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
 }
+.sync-dot.online { background: #4CAF50; }
+.sync-dot.syncing { background: #FF9800; }
+.sync-dot.offline { background: #f44336; }
 
-.date-range-text {
-    font-size: 16px;
-    font-weight: 600;
-    color: #455A64;
-}
-
-/* График */
+/* ========== ГРАФИК ========== */
 .schedule-wrapper {
     overflow: auto;
-    max-height: 65vh;
-    position: relative;
+    max-height: 60vh;
 }
 
-.schedule-table {
-    min-width: 100%;
-}
+.schedule-table { min-width: 100%; }
 
-/* Заголовки дат */
 .date-headers {
     display: flex;
     position: sticky;
@@ -382,15 +205,14 @@ body {
 }
 
 .time-header-cell {
-    min-width: 90px;
-    width: 90px;
-    padding: 10px 5px;
+    min-width: 80px;
+    width: 80px;
+    padding: 8px;
     background: #37474F;
     color: white;
     text-align: center;
     font-weight: 700;
-    font-size: 14px;
-    border-right: 1px solid rgba(255,255,255,0.2);
+    font-size: 13px;
     position: sticky;
     left: 0;
     z-index: 21;
@@ -398,55 +220,31 @@ body {
 
 .date-header-cell {
     flex: 1;
-    min-width: 120px;
-    padding: 10px 5px;
-    background: linear-gradient(180deg, #546E7A 0%, #607D8B 100%);
+    min-width: 100px;
+    padding: 8px 5px;
+    background: linear-gradient(180deg, #546E7A, #607D8B);
     color: white;
     text-align: center;
-    font-weight: 600;
-    font-size: 13px;
-    border-right: 1px solid rgba(255,255,255,0.2);
+    font-size: 12px;
     cursor: pointer;
-    transition: background 0.3s;
+    border-right: 1px solid rgba(255,255,255,0.2);
 }
 
-.date-header-cell:hover {
-    background: #78909C;
-}
+.date-header-cell.today { background: #9E9D24 !important; }
 
-/* Текущая дата - фисташковый цвет */
-.date-header-cell.today {
-    background: #9E9D24 !important;
-    box-shadow: inset 0 0 0 3px rgba(255,255,255,0.5);
-}
+.date-day-name { font-size: 10px; }
+.date-day-number { font-size: 16px; font-weight: 700; }
+.date-month { font-size: 10px; }
 
-.date-day-name {
-    font-size: 11px;
-    opacity: 0.9;
-}
-
-.date-day-number {
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.date-month {
-    font-size: 11px;
-    opacity: 0.9;
-}
-
-/* Строки времени */
-.schedule-row {
-    display: flex;
-}
+.schedule-row { display: flex; }
 
 .time-cell {
-    min-width: 90px;
-    width: 90px;
-    padding: 8px 5px;
+    min-width: 80px;
+    width: 80px;
+    padding: 6px;
     background: #f5f5f5;
     text-align: center;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: #555;
     border-bottom: 1px solid #e0e0e0;
@@ -461,72 +259,36 @@ body {
 
 .schedule-cell {
     flex: 1;
-    min-width: 120px;
-    min-height: 50px;
+    min-width: 100px;
+    height: 50px;
     border-bottom: 1px solid #e8e8e8;
     border-right: 1px solid #f0f0f0;
-    padding: 2px;
     cursor: pointer;
-    transition: background 0.2s;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 1px;
 }
 
-.schedule-cell:hover {
-    background: #f9f9f9;
+.schedule-cell:hover { background: #f9f9f9; }
+.schedule-cell.today-column { background: #F9FBE7; }
+
+/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ ========== */
+.merged-event-overlay {
+    position: absolute !important;
+    left: 2px !important;
+    right: 2px !important;
+    border-radius: 8px !important;
+    padding: 6px 8px !important;
+    color: white !important;
+    font-size: 11px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
 }
 
-/* Текущая колонка - фисташковый оттенок */
-.schedule-cell.today-column {
-    background: #F9FBE7;
-}
-
-.schedule-cell.has-events {
-    background: #f5f5f5;
-}
-
-/* Блоки событий */
-.event-chip {
-    padding: 4px 8px;
-    border-radius: 6px;
-    color: white;
-    font-size: 11px;
-    cursor: pointer;
-    transition: all 0.2s;
-    overflow: hidden;
-    position: relative;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-}
-
-.event-chip:hover {
-    transform: scale(1.03);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-    z-index: 50;
-}
-
-.event-chip-title {
-    font-weight: 700;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.event-chip-patient {
-    font-size: 10px;
-    opacity: 0.9;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.event-chip-time {
-    font-size: 9px;
-    opacity: 0.8;
-}
-
-/* Модальное окно */
+/* ========== МОДАЛЬНОЕ ОКНО ========== */
 .modal {
     display: none;
     position: fixed;
@@ -536,7 +298,6 @@ body {
     width: 100%;
     height: 100%;
     background: rgba(0,0,0,0.6);
-    animation: fadeIn 0.2s;
 }
 
 .modal-content {
@@ -547,315 +308,45 @@ body {
     width: 90%;
     max-width: 500px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    animation: slideIn 0.3s;
     position: relative;
 }
 
 .close-btn {
     position: absolute;
-    right: 20px;
-    top: 15px;
-    font-size: 28px;
-    font-weight: bold;
+    right: 15px;
+    top: 10px;
+    font-size: 24px;
     cursor: pointer;
     color: #999;
-    transition: color 0.2s;
 }
 
-.close-btn:hover {
-    color: #333;
-}
-
-#modalTitle {
-    margin-bottom: 20px;
-    color: #455A64;
-    font-size: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 600;
-    font-size: 13px;
-    color: #555;
-}
-
-.form-group input,
-.form-group select,
-.form-group textarea {
+.form-group { margin-bottom: 15px; }
+.form-group label { display: block; margin-bottom: 4px; font-weight: 600; font-size: 12px; color: #555; }
+.form-group input, .form-group select, .form-group textarea {
     width: 100%;
-    padding: 10px;
+    padding: 8px;
     border: 2px solid #e0e0e0;
     border-radius: 8px;
-    font-size: 14px;
+    font-size: 13px;
     font-family: inherit;
-    transition: border-color 0.3s;
 }
+.form-group textarea { resize: vertical; min-height: 40px; }
 
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-    outline: none;
-    border-color: #607D8B;
-}
+.time-range-select { display: flex; align-items: center; gap: 8px; }
+.time-select { flex: 1; }
+.time-separator { font-weight: bold; }
 
-.form-group textarea {
-    resize: vertical;
-    min-height: 50px;
-}
+.modal-actions { display: flex; gap: 8px; margin-top: 15px; }
+.btn-save { background: #607D8B; color: white; flex: 1; padding: 10px; }
+.btn-delete { background: #f44336; color: white; padding: 10px 20px; }
+.btn-cancel { background: #9e9e9e; color: white; padding: 10px 20px; }
 
-.modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-/* Анимации */
-@keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
-}
-
-@keyframes slideIn {
-    from { transform: translateY(-30px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
-}
-
-/* Адаптивность */
-@media (max-width: 1024px) {
-    .header {
-        flex-direction: column;
-        text-align: center;
-    }
-    
-    .clinic-logo {
-        justify-content: center;
-    }
-    
-    .header-controls {
-        justify-content: center;
-    }
-    
-    .user-control select {
-        min-width: 250px;
-    }
-    
-    .date-headers {
-        font-size: 11px;
-    }
-    
-    .date-header-cell {
-        min-width: 90px;
-    }
-    
-    .schedule-cell {
-        min-width: 90px;
-    }
-}
-
+/* ========== АДАПТИВ ========== */
 @media (max-width: 768px) {
-    .app-background {
-        padding: 5px;
-    }
-    
-    .container {
-        border-radius: 10px;
-    }
-    
-    .header h1 {
-        font-size: 18px;
-    }
-    
-    .tooth-icon {
-        font-size: 28px;
-    }
-    
-    .date-nav {
-        gap: 5px;
-        padding: 10px;
-    }
-    
-    .date-nav .btn {
-        padding: 6px 10px;
-        font-size: 11px;
-    }
-    
-    .schedule-wrapper {
-        max-height: 55vh;
-    }
-    
-    .time-header-cell,
-    .time-cell {
-        min-width: 60px;
-        width: 60px;
-        font-size: 11px;
-    }
-    
-    .date-header-cell {
-        min-width: 70px;
-        font-size: 10px;
-    }
-    
-    .schedule-cell {
-        min-width: 70px;
-        min-height: 40px;
-    }
-    
-    .event-chip {
-        font-size: 9px;
-        padding: 2px 4px;
-    }
-    
-    .modal-content {
-        margin: 10% auto;
-        width: 95%;
-        padding: 15px;
-    }
-    
-    .legend-scroll {
-        gap: 15px;
-    }
-    
-    .legend-item {
-        font-size: 11px;
-    }
-    
-    .user-control select {
-        min-width: 200px;
-        font-size: 11px;
-    }
-}
-
-@media (max-width: 480px) {
-    .header {
-        padding: 10px;
-    }
-    
-    .user-control select {
-        min-width: 150px;
-        font-size: 10px;
-    }
-    
-    .date-day-number {
-        font-size: 14px;
-    }
-    
-    .time-cell {
-        font-size: 10px;
-    }
-    
-    .event-chip-title {
-        font-size: 9px;
-    }
-/* ========== ВЫБОР ВРЕМЕНИ В МОДАЛЬНОМ ОКНЕ ========== */
-.time-range-select {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.time-select {
-    flex: 1;
-    padding: 10px;
-    border: 2px solid #e0e0e0;
-    border-radius: 8px;
-    font-size: 14px;
-    font-family: inherit;
-}
-
-.time-select:focus {
-    outline: none;
-    border-color: #607D8B;
-}
-
-.time-separator {
-    font-size: 18px;
-    font-weight: bold;
-    color: #555;
-}
-/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ ========== */
-.event-chip[data-group-id]:not([data-group-id=""]) {
-    border-radius: 0 !important;
-    margin: 0 !important;
-    border-bottom: 1px solid rgba(255,255,255,0.3) !important;
-}
-
-/* Первая ячейка объединённого события */
-.schedule-cell:has(.event-chip[data-group-id]:not([data-group-id=""])) + .schedule-cell:not(:has(.event-chip[data-group-id])) {
-    /* Это первая ячейка группы */
-}
-
-.event-chip.group-first {
-    border-radius: 6px 6px 0 0 !important;
-    margin-top: 2px !important;
-}
-
-.event-chip.group-last {
-    border-radius: 0 0 6px 6px !important;
-    border-bottom: none !important;
-}
-
-.event-chip.group-single {
-    border-radius: 6px !important;
-}
-
-/* Убираем отступы между ячейками одного события */
-.schedule-cell.group-cell {
-    padding: 0 !important;
-    border-bottom: none !important;
-}
-/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ (СПЛОШНЫЕ) ========== */
-.schedule-cell.group-cell {
-    padding: 0 !important;
-}
-
-.event-chip.group-first {
-    border-radius: 6px 6px 0 0 !important;
-    margin-top: 2px !important;
-}
-
-.event-chip.group-middle {
-    border-radius: 0 !important;
-    margin: 0 !important;
-    border-top: 1px solid rgba(255,255,255,0.3) !important;
-    border-bottom: 1px solid rgba(255,255,255,0.3) !important;
-}
-
-.event-chip.group-last {
-    border-radius: 0 0 6px 6px !important;
-    margin-bottom: 2px !important;
-    border-top: 1px solid rgba(255,255,255,0.3) !important;
-}
-
-.event-chip.group-single {
-    border-radius: 6px !important;
-}
-/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ ========== */
-.schedule-cell {
-    position: relative;
-}
-
-.merged-event-overlay {
-    position: absolute !important;
-    left: 0 !important;
-    right: 0 !important;
-    border-radius: 8px !important;
-    padding: 8px 10px !important;
-    color: white !important;
-    font-size: 12px !important;
-    cursor: pointer !important;
-    z-index: 10 !important;
-    overflow: hidden !important;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
-    transition: transform 0.2s !important;
-}
-
-.merged-event-overlay:hover {
-    transform: scale(1.02) !important;
-    z-index: 50 !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+    .header { flex-direction: column; text-align: center; }
+    .header h1 { font-size: 16px; }
+    .time-header-cell, .time-cell { min-width: 55px; width: 55px; font-size: 10px; }
+    .date-header-cell { min-width: 70px; font-size: 10px; }
+    .schedule-cell { min-width: 70px; height: 40px; }
+    .merged-event-overlay { font-size: 9px !important; padding: 3px 5px !important; }
 }
