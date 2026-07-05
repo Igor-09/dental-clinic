@@ -834,3 +834,28 @@ body {
 .event-chip.group-single {
     border-radius: 6px !important;
 }
+/* ========== ОБЪЕДИНЁННЫЕ СОБЫТИЯ ========== */
+.schedule-cell {
+    position: relative;
+}
+
+.merged-event-overlay {
+    position: absolute !important;
+    left: 0 !important;
+    right: 0 !important;
+    border-radius: 8px !important;
+    padding: 8px 10px !important;
+    color: white !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    transition: transform 0.2s !important;
+}
+
+.merged-event-overlay:hover {
+    transform: scale(1.02) !important;
+    z-index: 50 !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3) !important;
+}
