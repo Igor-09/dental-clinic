@@ -6,24 +6,48 @@
     <title>Имплант Клиник - График работы</title>
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Firebase скрипты -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
-    </script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
-    </script>
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
-    <div class="app-background">
+    <!-- ЭКРАН ВХОДА -->
+    <div id="loginScreen" class="login-screen">
+        <div class="login-card">
+            <div class="login-logo">
+                <span class="tooth-icon">🦷</span>
+                <h1>Имплант Клиник</h1>
+                <p>Введите пароль для входа</p>
+            </div>
+            
+            <div class="login-form">
+                <div class="form-group">
+                    <label for="loginPassword">Пароль:</label>
+                    <input type="password" id="loginPassword" placeholder="Введите пароль" autocomplete="off">
+                </div>
+                
+                <button id="loginBtn" class="btn btn-login">Войти</button>
+                
+                <div id="loginError" class="login-error"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
+    <div id="appScreen" class="app-background" style="display:none;">
         <div class="container">
             <header class="header">
                 <div class="clinic-logo">
                     <span class="tooth-icon">🦷</span>
                     <div>
                         <h1>Имплант Клиник</h1>
-                        <p class="clinic-subtitle">График работы специалистов</p>
+                        <p class="clinic-subtitle" id="headerSubtitle">График работы специалистов</p>
                     </div>
                 </div>
                 <div class="header-controls">
+                    <div class="user-info">
+                        <span id="currentUserName"></span>
+                    </div>
                     <div class="user-control">
                         <label for="userSelect">Специалист:</label>
                         <select id="userSelect">
@@ -32,6 +56,7 @@
                         </select>
                     </div>
                     <button id="viewAllBtn" class="btn btn-view-all">👁 Все специалисты</button>
+                    <button id="logoutBtn" class="btn btn-logout">🚪 Выйти</button>
                 </div>
             </header>
 
@@ -68,6 +93,7 @@
         </div>
     </div>
 
+    <!-- Модальное окно -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
@@ -128,6 +154,7 @@
     </div>
 
     <script src="config.js"></script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
