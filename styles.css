@@ -1,3 +1,44 @@
+.login-screen {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #37474F, #607D8B);
+}
+
+.login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    width: 400px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.login-logo .tooth-icon { font-size: 50px; }
+.login-logo h1 { color: #37474F; margin: 10px 0; }
+.login-logo p { color: #999; margin-bottom: 20px; }
+
+.login-form input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    font-size: 16px;
+    margin-bottom: 15px;
+}
+
+.btn-login {
+    width: 100%;
+    padding: 14px;
+    background: #455A64;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
 * {
     margin: 0;
     padding: 0;
