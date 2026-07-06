@@ -13,6 +13,7 @@ function initApp(user) {
     var events = {};
     var editingEvent = null;
     var selectedCell = null;
+    var copiedEvent = null; // Для копирования
     
     var userSelect = document.getElementById('userSelect');
     var datePicker = document.getElementById('datePicker');
@@ -76,13 +77,10 @@ function initApp(user) {
     
     function esc(t) { if(!t) return ''; var d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
     
-    // Получаем РЕАЛЬНУЮ высоту ячейки из DOM
     function getCellHeight() {
         var cell = document.querySelector('.schedule-cell');
-        if (cell) {
-            return cell.getBoundingClientRect().height;
-        }
-        return 50; // запасное значение
+        if (cell) return cell.getBoundingClientRect().height;
+        return 50;
     }
     
     function renderSchedule() {
@@ -110,28 +108,104 @@ function initApp(user) {
             }
             scheduleTable.innerHTML = html;
             
-            // Даём браузеру отрисовать ячейки
-            setTimeout(function() {
-                placeOverlays(wd);
-            }, 100);
+            setTimeout(function() { placeOverlays(wd); }, 100);
             
             document.querySelectorAll('.schedule-cell').forEach(function(cell) {
                 cell.onclick = function(e) {
                     if (e.target.closest('.merged-event-overlay')) return;
                     selectedCell = { date: this.dataset.date, time: this.dataset.time };
-                    openNewModal();
+                    
+                    // Если есть скопированное событие — сразу вставляем
+                    if (copiedEvent) {
+                        pasteEvent();
+                    } else {
+                        openNewModal();
+                    }
+                };
+                
+                // Правый клик — вставить скопированное
+                cell.oncontextmenu = function(e) {
+                    e.preventDefault();
+                    selectedCell = { date: this.dataset.date, time: this.dataset.time };
+                    if (copiedEvent) {
+                        pasteEvent();
+                    }
                 };
             });
             
             document.querySelectorAll('.date-header-cell').forEach(function(h) {
                 h.onclick = function() { currentStartDate = new Date(this.dataset.date + 'T00:00:00'); renderSchedule(); };
             });
+            
+            // Показываем подсказку о скопированном событии
+            updateCopyHint();
+        });
+    }
+    
+    function updateCopyHint() {
+        var old = document.querySelector('.copy-hint');
+        if (old) old.remove();
+        
+        if (copiedEvent) {
+            var hint = document.createElement('div');
+            hint.className = 'copy-hint';
+            hint.innerHTML = '📋 Скопировано: <b>' + esc(copiedEvent.title) + '</b> | Нажмите на ячейку чтобы вставить | <button onclick="window._cancelCopy()" style="cursor:pointer;border:none;background:#f44336;color:white;padding:2px 8px;border-radius:4px;">✕</button>';
+            hint.style.cssText = 'text-align:center;padding:6px;background:#fff3e0;border-bottom:1px solid #ffcc02;font-size:12px;flex-shrink:0;';
+            var nav = document.querySelector('.date-nav');
+            if (nav) nav.parentNode.insertBefore(hint, nav.nextSibling);
+        }
+    }
+    
+    window._cancelCopy = function() {
+        copiedEvent = null;
+        updateCopyHint();
+    };
+    
+    function pasteEvent() {
+        if (!copiedEvent || !selectedCell) return;
+        
+        var startTime = selectedCell.time;
+        // Вычисляем конец на основе длительности скопированного события
+        var origStartIdx = timeSlots.indexOf(copiedEvent.startTime);
+        var origEndIdx = timeSlots.indexOf(copiedEvent.endTime);
+        var duration = origEndIdx - origStartIdx;
+        var newStartIdx = timeSlots.indexOf(startTime);
+        var newEndIdx = Math.min(newStartIdx + duration, timeSlots.length - 1);
+        var endTime = timeSlots[newEndIdx];
+        
+        var date = selectedCell.date;
+        var gid = 'g' + Date.now();
+        var promises = [];
+        
+        for (var i = newStartIdx; i <= newEndIdx; i++) {
+            var ek = date + '_' + timeSlots[i];
+            var eid = gid + '_' + i;
+            var data = {
+                title: copiedEvent.title,
+                patient: copiedEvent.patient,
+                phone: copiedEvent.phone,
+                type: copiedEvent.type,
+                color: copiedEvent.color,
+                comment: copiedEvent.comment,
+                user: currentUserId,
+                groupId: gid,
+                spanCount: newEndIdx - newStartIdx + 1,
+                startTime: startTime,
+                endTime: endTime,
+                createdAt: new Date().toISOString()
+            };
+            promises.push(db.ref('events/' + ek + '/' + eid).set(data));
+        }
+        
+        Promise.all(promises).then(function() {
+            setStatus('online', 'Вставлено!');
+            selectedCell = null;
+            renderSchedule();
         });
     }
     
     function placeOverlays(wd) {
         var CELL_HEIGHT = getCellHeight();
-        console.log('Высота ячейки:', CELL_HEIGHT);
         
         var mergedEvents = {};
         for (var di = 0; di < 7; di++) {
@@ -150,7 +224,6 @@ function initApp(user) {
             }
         }
         
-        // Удаляем старые оверлеи
         document.querySelectorAll('.merged-event-overlay').forEach(function(el) { el.remove(); });
         
         for (var di = 0; di < 7; di++) {
@@ -185,6 +258,7 @@ function initApp(user) {
         
         modalTitle.textContent = 'Новая запись - ' + selectedCell.date + ' ' + selectedCell.time;
         deleteEventBtn.style.display = 'none';
+        document.getElementById('copyEventBtn').style.display = 'none';
         eventModal.style.display = 'block';
         eventName.focus();
     }
@@ -209,6 +283,7 @@ function initApp(user) {
         
         modalTitle.textContent = 'Редактировать запись';
         deleteEventBtn.style.display = 'inline-block';
+        document.getElementById('copyEventBtn').style.display = 'inline-block';
         eventModal.style.display = 'block';
     }
     
@@ -241,6 +316,25 @@ function initApp(user) {
     
     function closeModal() {
         eventModal.style.display = 'none';
+    }
+    
+    function copyCurrentEvent() {
+        if (!editingEvent || editingEvent.isNew) return;
+        
+        copiedEvent = {
+            title: eventName.value.trim(),
+            patient: eventPatient.value.trim(),
+            phone: eventPhone.value.trim(),
+            type: eventType.value,
+            color: eventColor.value,
+            comment: eventComment.value.trim(),
+            startTime: document.getElementById('eventStartTime')?.value || editingEvent.event.startTime,
+            endTime: document.getElementById('eventEndTime')?.value || editingEvent.event.endTime
+        };
+        
+        closeModal();
+        updateCopyHint();
+        setStatus('online', 'Событие скопировано! Нажмите на ячейку для вставки');
     }
     
     function saveEvent() {
@@ -365,6 +459,7 @@ function initApp(user) {
     
     document.getElementById('saveEventBtn').addEventListener('click', saveEvent);
     document.getElementById('deleteEventBtn').addEventListener('click', deleteEvent);
+    document.getElementById('copyEventBtn').addEventListener('click', copyCurrentEvent);
     document.getElementById('cancelEventBtn').addEventListener('click', closeModal);
     document.querySelector('.close-btn').addEventListener('click', closeModal);
     eventModal.addEventListener('click', function(e) { if (e.target === eventModal) closeModal(); });
@@ -373,7 +468,6 @@ function initApp(user) {
         if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal();
     });
     
-    // При повороте экрана — перерисовываем
     window.addEventListener('resize', function() {
         var wd = getWeekDates(currentStartDate);
         placeOverlays(wd);
