@@ -368,3 +368,109 @@ body {
     color: white;
     padding: 10px 15px;
 }
+/* ========== КНОПКА ИСТОРИИ ========== */
+.btn-history {
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* ========== ОКНО ИСТОРИИ ========== */
+.history-content {
+    max-width: 700px !important;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.history-filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+}
+
+.history-filters input {
+    flex: 1;
+    min-width: 150px;
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.history-filters select {
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.history-list {
+    max-height: 55vh;
+    overflow-y: auto;
+}
+
+.history-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.history-item:hover {
+    background: #f9f9f9;
+}
+
+.history-color {
+    width: 6px;
+    height: 40px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.history-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.history-title {
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-patient {
+    font-size: 12px;
+    color: #666;
+}
+
+.history-details {
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+}
+
+.history-date {
+    font-size: 11px;
+    color: #999;
+    white-space: nowrap;
+    text-align: right;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 30px;
+    color: #999;
+    font-size: 14px;
+}
+
+.btn-copy {
+    background: #FF9800;
+    color: white;
+    padding: 10px 15px;
+}
