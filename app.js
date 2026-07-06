@@ -472,6 +472,126 @@ function initApp(user) {
         var wd = getWeekDates(currentStartDate);
         placeOverlays(wd);
     });
+    // ========== ИСТОРИЯ СОБЫТИЙ ==========
+    
+    var allEventsCache = [];
+    
+    function loadAllEvents() {
+        var result = [];
+        for (var key in events) {
+            if (!events.hasOwnProperty(key)) continue;
+            var parts = key.split('_');
+            var date = parts[0];
+            var time = parts[1] || '';
+            
+            for (var eid in events[key]) {
+                if (!events[key].hasOwnProperty(eid)) continue;
+                var ev = events[key][eid];
+                
+                // Пропускаем дубликаты групп
+                if (ev.groupId) {
+                    var found = result.find(function(r) { return r.groupId === ev.groupId; });
+                    if (found) continue;
+                }
+                
+                result.push({
+                    id: eid,
+                    eventKey: key,
+                    date: date,
+                    time: time,
+                    startTime: ev.startTime || time,
+                    endTime: ev.endTime || time,
+                    title: ev.title || '',
+                    patient: ev.patient || '',
+                    phone: ev.phone || '',
+                    type: ev.type || '',
+                    color: ev.color || '#607D8B',
+                    comment: ev.comment || '',
+                    user: ev.user || '',
+                    groupId: ev.groupId || null,
+                    spanCount: ev.spanCount || 1,
+                    createdAt: ev.createdAt || ''
+                });
+            }
+        }
+        
+        // Сортируем по дате и времени (новые сверху)
+        result.sort(function(a, b) {
+            if (a.date !== b.date) return b.date.localeCompare(a.date);
+            return b.startTime.localeCompare(a.startTime);
+        });
+        
+        return result;
+    }
+    
+    function showHistory() {
+        allEventsCache = loadAllEvents();
+        document.getElementById('historyModal').style.display = 'block';
+        renderHistoryList(allEventsCache);
+    }
+    
+    function renderHistoryList(list) {
+        var html = '';
+        
+        if (list.length === 0) {
+            html = '<div class="history-empty">📭 Нет сохранённых событий</div>';
+        } else {
+            list.forEach(function(ev) {
+                var userName = ev.user === 'user1' ? 'Димидов Д.П.' : 'Казарьянц Э.А.';
+                var typeLabel = getEventTypeLabel(ev.type);
+                var timeRange = ev.startTime;
+                if (ev.endTime && ev.endTime !== ev.startTime) {
+                    timeRange += ' — ' + ev.endTime;
+                }
+                
+                html += '<div class="history-item" onclick="window._goToEvent(\'' + ev.date + '\', \'' + ev.startTime + '\')">';
+                html += '<div class="history-color" style="background:' + ev.color + ';"></div>';
+                html += '<div class="history-info">';
+                html += '<div class="history-title">' + esc(ev.title) + '</div>';
+                if (ev.patient) html += '<div class="history-patient">👤 ' + esc(ev.patient) + '</div>';
+                html += '<div class="history-details">' + typeLabel + ' | ' + userName + ' | ' + timeRange + '</div>';
+                html += '</div>';
+                html += '<div class="history-date">' + ev.date + '</div>';
+                html += '</div>';
+            });
+        }
+        
+        document.getElementById('historyList').innerHTML = html;
+    }
+    
+    window._filterHistory = function() {
+        var search = (document.getElementById('historySearch').value || '').toLowerCase();
+        var userFilter = document.getElementById('historyUserFilter').value;
+        
+        var filtered = allEventsCache.filter(function(ev) {
+            var matchSearch = true;
+            if (search) {
+                matchSearch = (ev.title || '').toLowerCase().indexOf(search) >= 0 ||
+                             (ev.patient || '').toLowerCase().indexOf(search) >= 0 ||
+                             (ev.phone || '').toLowerCase().indexOf(search) >= 0;
+            }
+            var matchUser = userFilter === 'all' || ev.user === userFilter;
+            return matchSearch && matchUser;
+        });
+        
+        renderHistoryList(filtered);
+    };
+    
+    window._goToEvent = function(date, time) {
+        document.getElementById('historyModal').style.display = 'none';
+        currentStartDate = new Date(date + 'T00:00:00');
+        renderSchedule();
+    };
+    
+    // Кнопка истории
+    document.getElementById('historyBtn').addEventListener('click', showHistory);
+    
+    // Закрытие истории по клику вне окна
+    document.getElementById('historyModal').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('historyModal')) {
+            document.getElementById('historyModal').style.display = 'none';
+        }
+    });
     
     setStatus('online', 'Готово');
     renderSchedule();
