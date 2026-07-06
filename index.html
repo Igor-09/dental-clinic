@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Имплант Клиник - График работы</title>
     <link rel="stylesheet" href="styles.css">
-    
-    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 </head>
 <body>
+
     <!-- ЭКРАН ВХОДА -->
     <div id="loginScreen" class="login-screen">
         <div class="login-card">
@@ -19,15 +18,12 @@
                 <h1>Имплант Клиник</h1>
                 <p>Введите пароль для входа</p>
             </div>
-            
             <div class="login-form">
                 <div class="form-group">
                     <label for="loginPassword">Пароль:</label>
-                    <input type="password" id="loginPassword" placeholder="Введите пароль" autocomplete="off">
+                    <input type="password" id="loginPassword" placeholder="Введите пароль">
                 </div>
-                
                 <button id="loginBtn" class="btn btn-login">Войти</button>
-                
                 <div id="loginError" class="login-error"></div>
             </div>
         </div>
@@ -41,22 +37,21 @@
                     <span class="tooth-icon">🦷</span>
                     <div>
                         <h1>Имплант Клиник</h1>
-                        <p class="clinic-subtitle" id="headerSubtitle">График работы специалистов</p>
+                        <p class="clinic-subtitle" id="headerSubtitle">График работы</p>
                     </div>
                 </div>
                 <div class="header-controls">
-                    <div class="user-info">
-                        <span id="currentUserName"></span>
-                    </div>
+                    <div class="user-info"><span id="currentUserName"></span></div>
                     <div class="user-control">
                         <label for="userSelect">Специалист:</label>
                         <select id="userSelect">
-                            <option value="user1">Димидов Д.П. - Хирург-имплантолог</option>
-                            <option value="user2">Казарьянц Э.А. - Ортопед</option>
+                            <option value="user1">Димидов Д.П.</option>
+                            <option value="user2">Казарьянц Э.А.</option>
                         </select>
                     </div>
-                    <button id="viewAllBtn" class="btn btn-view-all">👁 Все специалисты</button>
-                    <button id="logoutBtn" class="btn btn-logout">🚪 Выйти</button>
+                    <button id="viewAllBtn" class="btn btn-view-all">👁 Все</button>
+                    <button id="historyBtn" class="btn btn-history">📋 История</button>
+                    <button id="logoutBtn" class="btn btn-logout">🚪</button>
                 </div>
             </header>
 
@@ -77,7 +72,7 @@
                 <button id="nextDay" class="btn btn-nav">День ▶</button>
                 <button id="nextWeek" class="btn btn-nav">Неделя ▶</button>
                 <button id="todayBtn" class="btn btn-today">Сегодня</button>
-                <button id="syncBtn" class="btn btn-sync" title="Синхронизировать">🔄</button>
+                <button id="syncBtn" class="btn btn-sync">🔄</button>
             </div>
 
             <div id="syncStatus" class="sync-status">
@@ -87,13 +82,13 @@
 
             <div class="schedule-wrapper">
                 <div class="schedule-table" id="scheduleTable">
-                    <div class="loading">Загрузка расписания...</div>
+                    <div class="loading">Загрузка...</div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Модальное окно -->
+    <!-- МОДАЛЬНОЕ ОКНО СОБЫТИЯ -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
@@ -101,19 +96,16 @@
             
             <div class="form-group">
                 <label for="eventName">Название:</label>
-                <input type="text" id="eventName" placeholder="Например: Консультация, Имплантация...">
+                <input type="text" id="eventName" placeholder="Например: Консультация...">
             </div>
-            
             <div class="form-group">
                 <label for="eventPatient">Пациент:</label>
                 <input type="text" id="eventPatient" placeholder="ФИО пациента">
             </div>
-            
             <div class="form-group">
                 <label for="eventPhone">Телефон:</label>
                 <input type="tel" id="eventPhone" placeholder="+7 (___) ___-__-__">
             </div>
-            
             <div class="form-group">
                 <label for="eventType">Тип приема:</label>
                 <select id="eventType">
@@ -127,7 +119,6 @@
                     <option value="other">Прочее</option>
                 </select>
             </div>
-            
             <div class="form-group">
                 <label for="eventColor">Цвет:</label>
                 <select id="eventColor">
@@ -139,18 +130,37 @@
                     <option value="#F44336">Красный</option>
                 </select>
             </div>
-            
             <div class="form-group">
                 <label for="eventComment">Комментарий:</label>
-                <textarea id="eventComment" rows="2" placeholder="Дополнительная информация..."></textarea>
+                <textarea id="eventComment" rows="2" placeholder="Дополнительно..."></textarea>
+            </div>
+            <div class="modal-actions">
+                <button id="saveEventBtn" class="btn btn-save">Сохранить</button>
+                <button id="copyEventBtn" class="btn btn-copy" style="display:none;">📋 Копировать</button>
+                <button id="deleteEventBtn" class="btn btn-delete" style="display:none;">Удалить</button>
+                <button id="cancelEventBtn" class="btn btn-cancel">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ИСТОРИИ -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content history-content">
+            <span class="close-btn" onclick="document.getElementById('historyModal').style.display='none'">&times;</span>
+            <h2>📋 История событий</h2>
+            
+            <div class="history-filters">
+                <input type="text" id="historySearch" placeholder="🔍 Поиск по пациенту или названию..." oninput="window._filterHistory()">
+                <select id="historyUserFilter" onchange="window._filterHistory()">
+                    <option value="all">Все специалисты</option>
+                    <option value="user1">Димидов Д.П.</option>
+                    <option value="user2">Казарьянц Э.А.</option>
+                </select>
             </div>
             
-            <div class="modal-actions">
-    <button id="saveEventBtn" class="btn btn-save">Сохранить</button>
-    <button id="copyEventBtn" class="btn btn-copy" style="display:none;">📋 Копировать</button>
-    <button id="deleteEventBtn" class="btn btn-delete" style="display:none;">Удалить</button>
-    <button id="cancelEventBtn" class="btn btn-cancel">Отмена</button>
-</div>
+            <div class="history-list" id="historyList">
+                <p style="text-align:center;color:#999;">Загрузка...</p>
+            </div>
         </div>
     </div>
 
