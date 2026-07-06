@@ -10,7 +10,6 @@
 </head>
 <body>
 
-    <!-- ЭКРАН ВХОДА -->
     <div id="loginScreen" class="login-screen">
         <div class="login-card">
             <div class="login-logo">
@@ -29,7 +28,6 @@
         </div>
     </div>
 
-    <!-- ОСНОВНОЕ ПРИЛОЖЕНИЕ -->
     <div id="appScreen" class="app-background" style="display:none;">
         <div class="container">
             <header class="header">
@@ -88,52 +86,17 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО СОБЫТИЯ -->
+    <!-- Модальное окно события -->
     <div id="eventModal" class="modal">
         <div class="modal-content">
             <span class="close-btn">&times;</span>
             <h2 id="modalTitle">Создать запись</h2>
-            
-            <div class="form-group">
-                <label for="eventName">Название:</label>
-                <input type="text" id="eventName" placeholder="Например: Консультация...">
-            </div>
-            <div class="form-group">
-                <label for="eventPatient">Пациент:</label>
-                <input type="text" id="eventPatient" placeholder="ФИО пациента">
-            </div>
-            <div class="form-group">
-                <label for="eventPhone">Телефон:</label>
-                <input type="tel" id="eventPhone" placeholder="+7 (___) ___-__-__">
-            </div>
-            <div class="form-group">
-                <label for="eventType">Тип приема:</label>
-                <select id="eventType">
-                    <option value="consultation">Консультация</option>
-                    <option value="implantation">Имплантация</option>
-                    <option value="removal">Удаление</option>
-                    <option value="examination">Осмотр</option>
-                    <option value="delivery">Сдача</option>
-                    <option value="scanning">Сканирование</option>
-                    <option value="fitting">Примерка</option>
-                    <option value="other">Прочее</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="eventColor">Цвет:</label>
-                <select id="eventColor">
-                    <option value="#607D8B">Серый</option>
-                    <option value="#FF9800">Оранжевый</option>
-                    <option value="#4CAF50">Зеленый</option>
-                    <option value="#2196F3">Голубой</option>
-                    <option value="#9C27B0">Фиолетовый</option>
-                    <option value="#F44336">Красный</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="eventComment">Комментарий:</label>
-                <textarea id="eventComment" rows="2" placeholder="Дополнительно..."></textarea>
-            </div>
+            <div class="form-group"><label for="eventName">Название:</label><input type="text" id="eventName" placeholder="Например: Консультация..."></div>
+            <div class="form-group"><label for="eventPatient">Пациент:</label><input type="text" id="eventPatient" placeholder="ФИО пациента"></div>
+            <div class="form-group"><label for="eventPhone">Телефон:</label><input type="tel" id="eventPhone" placeholder="+7 (___) ___-__-__"></div>
+            <div class="form-group"><label for="eventType">Тип приема:</label><select id="eventType"><option value="consultation">Консультация</option><option value="implantation">Имплантация</option><option value="removal">Удаление</option><option value="examination">Осмотр</option><option value="delivery">Сдача</option><option value="scanning">Сканирование</option><option value="fitting">Примерка</option><option value="other">Прочее</option></select></div>
+            <div class="form-group"><label for="eventColor">Цвет:</label><select id="eventColor"><option value="#607D8B">Серый</option><option value="#FF9800">Оранжевый</option><option value="#4CAF50">Зеленый</option><option value="#2196F3">Голубой</option><option value="#9C27B0">Фиолетовый</option><option value="#F44336">Красный</option></select></div>
+            <div class="form-group"><label for="eventComment">Комментарий:</label><textarea id="eventComment" rows="2" placeholder="Дополнительно..."></textarea></div>
             <div class="modal-actions">
                 <button id="saveEventBtn" class="btn btn-save">Сохранить</button>
                 <button id="copyEventBtn" class="btn btn-copy" style="display:none;">📋 Копировать</button>
@@ -143,24 +106,20 @@
         </div>
     </div>
 
-    <!-- МОДАЛЬНОЕ ОКНО ИСТОРИИ -->
+    <!-- Модальное окно истории -->
     <div id="historyModal" class="modal">
         <div class="modal-content history-content">
             <span class="close-btn" onclick="document.getElementById('historyModal').style.display='none'">&times;</span>
             <h2>📋 История событий</h2>
-            
             <div class="history-filters">
-                <input type="text" id="historySearch" placeholder="🔍 Поиск по пациенту или названию..." oninput="window._filterHistory()">
+                <input type="text" id="historySearch" placeholder="🔍 Поиск..." oninput="window._filterHistory()">
                 <select id="historyUserFilter" onchange="window._filterHistory()">
                     <option value="all">Все специалисты</option>
                     <option value="user1">Димидов Д.П.</option>
                     <option value="user2">Казарьянц Э.А.</option>
                 </select>
             </div>
-            
-            <div class="history-list" id="historyList">
-                <p style="text-align:center;color:#999;">Загрузка...</p>
-            </div>
+            <div class="history-list" id="historyList"><p style="text-align:center;color:#999;">Загрузка...</p></div>
         </div>
     </div>
 
