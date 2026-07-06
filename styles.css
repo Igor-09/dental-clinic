@@ -439,9 +439,6 @@ body {
 .history-title {
     font-weight: 700;
     font-size: 13px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
 .history-patient {
@@ -452,21 +449,18 @@ body {
 .history-details {
     font-size: 11px;
     color: #999;
-    white-space: nowrap;
 }
 
 .history-date {
     font-size: 11px;
     color: #999;
     white-space: nowrap;
-    text-align: right;
 }
 
 .history-empty {
     text-align: center;
     padding: 30px;
     color: #999;
-    font-size: 14px;
 }
 
 .btn-copy {
