@@ -858,3 +858,71 @@ body {
         display: none !important;
     }
 }
+/* ========== СТРОКА ПАЦИЕНТА В ПЛАНЕ ========== */
+.plan-patient-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.plan-patient-field {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.plan-patient-field label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4a4a4a;
+    white-space: nowrap;
+}
+
+.plan-patient-field input {
+    flex: 1;
+    padding: 6px 10px;
+    border: 1px solid #8fa881;
+    border-radius: 6px;
+    font-size: 13px;
+    font-family: inherit;
+    color: #333;
+    background: #f9fbf8;
+}
+
+.plan-patient-field input:focus {
+    outline: none;
+    border-color: #7a916e;
+    background: white;
+}
+
+@media (max-width: 700px) {
+    .plan-patient-row {
+        flex-direction: column;
+        gap: 8px;
+    }
+    .plan-patient-field {
+        min-width: 100%;
+    }
+    .plan-patient-field label {
+        font-size: 11px;
+    }
+    .plan-patient-field input {
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+}
+
+@media print {
+    .plan-patient-row {
+        margin-bottom: 8px !important;
+    }
+    .plan-patient-field input {
+        border: 1px solid #8fa881 !important;
+        background: white !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
