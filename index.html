@@ -48,6 +48,7 @@
                         </select>
                     </div>
                     <button id="viewAllBtn" class="btn btn-view-all">👁 Все</button>
+                    <button id="planBtn" class="btn btn-plan">🦷 План лечения</button>
                     <button id="historyBtn" class="btn btn-history">📋 История</button>
                     <button id="logoutBtn" class="btn btn-logout">🚪</button>
                 </div>
@@ -120,6 +121,48 @@
                 </select>
             </div>
             <div class="history-list" id="historyList"><p style="text-align:center;color:#999;">Загрузка...</p></div>
+        </div>
+    </div>
+
+    <!-- МОДАЛЬНОЕ ОКНО ПЛАН ЛЕЧЕНИЯ -->
+    <div id="planModal" class="modal">
+        <div class="modal-content plan-content">
+            <span class="close-btn" onclick="document.getElementById('planModal').style.display='none'">&times;</span>
+            
+            <div class="plan-header">
+                <div class="plan-logo">
+                    <span class="plan-tooth">🦷</span>
+                    <h2>План лечения</h2>
+                    <p>Составляющие плана лечения</p>
+                </div>
+            </div>
+
+            <div class="plan-table-wrapper">
+                <table id="planTable" class="plan-table">
+                    <thead>
+                        <tr>
+                            <th style="width:6%">№</th>
+                            <th style="width:44%">Наименование</th>
+                            <th style="width:16%">Цена, ₽</th>
+                            <th style="width:10%">Кол-во</th>
+                            <th style="width:24%">Сумма, ₽</th>
+                        </tr>
+                    </thead>
+                    <tbody id="planTableBody">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="plan-total">
+                Итого к оплате: <span id="planGrandTotal">0</span> ₽
+            </div>
+
+            <div class="plan-buttons">
+                <button class="btn btn-plan-add" onclick="window._addPlanRow()">+ Добавить строку</button>
+                <button class="btn btn-plan-save" onclick="window._savePlan()">💾 Сохранить</button>
+                <button class="btn btn-plan-print" onclick="window._printPlan()">🖨 Распечатать</button>
+                <button class="btn btn-plan-clear" onclick="window._clearPlan()">Очистить</button>
+            </div>
         </div>
     </div>
 
