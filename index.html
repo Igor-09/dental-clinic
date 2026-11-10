@@ -143,9 +143,21 @@
                 </div>
             </div>
 
-            <!-- Вторая строка -->
+                       <!-- Вторая строка -->
             <div class="plan-specialty">
                 <h3>Ортопедия</h3>
+            </div>
+
+            <!-- Строка пациента -->
+            <div class="plan-patient-row">
+                <div class="plan-patient-field">
+                    <label>Ф.И.О. пациента:</label>
+                    <input type="text" id="planPatientName" placeholder="Петров Петр Петрович" oninput="window._savePlanPatient()">
+                </div>
+                <div class="plan-patient-field">
+                    <label>Дата:</label>
+                    <input type="text" id="planPatientDate" placeholder="10.11.2026г." oninput="window._savePlanPatient()">
+                </div>
             </div>
 
             <div class="plan-table-wrapper">
