@@ -285,6 +285,176 @@ function initApp(user) {
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal(); });
     window.addEventListener('resize', function() { var wd = getWeekDates(currentStartDate); placeOverlays(wd); });
     
+       // ========== ПЛАН ЛЕЧЕНИЯ ==========
+    
+    var planRows = [];
+    var PLAN_STORAGE_KEY = 'implantclinic_plan_v1';
+    
+    function fmtPlan(n) {
+        return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
+    }
+    
+    function createPlanRow(name, price, qty) {
+        name = name || '';
+        price = price || '';
+        qty = qty || 1;
+        
+        var tr = document.createElement('tr');
+        tr.innerHTML = 
+            '<td class="num"></td>' +
+            '<td class="name"><input type="text" value="' + escapeHtmlPlan(name) + '" placeholder="Название услуги"></td>' +
+            '<td><input type="number" min="0" step="0.01" value="' + price + '" placeholder="0"></td>' +
+            '<td><input type="number" min="1" step="1" value="' + qty + '" placeholder="1"></td>' +
+            '<td class="sum">0</td>';
+        
+        var inputs = tr.querySelectorAll('input');
+        inputs.forEach(function(inp) {
+            inp.addEventListener('input', function() {
+                updatePlanRow(tr);
+                recalcPlanAll();
+                savePlanLocal();
+            });
+        });
+        
+        document.getElementById('planTableBody').appendChild(tr);
+        updatePlanRow(tr);
+        recalcPlanAll();
+        return tr;
+    }
+    
+    function updatePlanRow(tr) {
+        var price = parseFloat(tr.children[2].querySelector('input').value) || 0;
+        var qty = parseFloat(tr.children[3].querySelector('input').value) || 0;
+        tr.children[4].textContent = fmtPlan(price * qty);
+    }
+    
+    function recalcPlanAll() {
+        var total = 0;
+        var rows = document.querySelectorAll('#planTableBody tr');
+        rows.forEach(function(tr, i) {
+            tr.children[0].textContent = i + 1;
+            var price = parseFloat(tr.children[2].querySelector('input').value) || 0;
+            var qty = parseFloat(tr.children[3].querySelector('input').value) || 0;
+            total += price * qty;
+        });
+        document.getElementById('planGrandTotal').textContent = fmtPlan(total);
+    }
+    
+    function escapeHtmlPlan(s) {
+        return String(s).replace(/[&<>"']/g, function(c) {
+            return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+        });
+    }
+    
+    function collectPlanData() {
+        var rows = [];
+        document.querySelectorAll('#planTableBody tr').forEach(function(tr) {
+            rows.push({
+                name: tr.children[1].querySelector('input').value,
+                price: tr.children[2].querySelector('input').value,
+                qty: tr.children[3].querySelector('input').value
+            });
+        });
+        return rows;
+    }
+    
+    function savePlanLocal() {
+        var rows = collectPlanData();
+        localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(rows));
+    }
+    
+    function loadPlanLocal() {
+        var raw = localStorage.getItem(PLAN_STORAGE_KEY);
+        document.getElementById('planTableBody').innerHTML = '';
+        
+        if (!raw) {
+            createPlanRow('Консультация стоматолога', 500, 1);
+            createPlanRow('Имплантация (установка импланта)', 35000, 1);
+            createPlanRow('Коронка металлокерамическая', 12000, 1);
+            savePlanLocal();
+            return;
+        }
+        
+        try {
+            var rows = JSON.parse(raw);
+            if (rows.length === 0) {
+                createPlanRow();
+            } else {
+                rows.forEach(function(r) {
+                    createPlanRow(r.name, r.price, r.qty);
+                });
+            }
+        } catch (e) {
+            createPlanRow();
+        }
+    }
+    
+    // Глобальные функции для кнопок
+    window._addPlanRow = function() {
+        createPlanRow();
+        savePlanLocal();
+    };
+    
+    window._savePlan = function() {
+        var rows = collectPlanData();
+        localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(rows));
+        
+        // Сохраняем в Firebase
+        setStatus('syncing', 'Сохранение плана...');
+        db.ref('treatmentPlan').set({
+            rows: rows,
+            updatedAt: new Date().toISOString(),
+            updatedBy: currentUserId
+        }).then(function() {
+            setStatus('online', 'План сохранён!');
+            alert('✅ План лечения сохранён!');
+        }).catch(function(e) {
+            setStatus('offline', 'Ошибка сохранения');
+            alert('Ошибка сохранения: ' + e.message);
+        });
+    };
+    
+    window._clearPlan = function() {
+        if (!confirm('Очистить всю таблицу?')) return;
+        document.getElementById('planTableBody').innerHTML = '';
+        createPlanRow();
+        savePlanLocal();
+    };
+    
+    window._printPlan = function() {
+        window.print();
+    };
+    
+    // Открытие окна плана лечения
+    document.getElementById('planBtn').addEventListener('click', function() {
+        console.log('План лечения открыт');
+        
+        // Пробуем загрузить из Firebase
+        db.ref('treatmentPlan').once('value').then(function(snap) {
+            var data = snap.val();
+            if (data && data.rows && data.rows.length > 0) {
+                document.getElementById('planTableBody').innerHTML = '';
+                data.rows.forEach(function(r) {
+                    createPlanRow(r.name, r.price, r.qty);
+                });
+            } else {
+                loadPlanLocal();
+            }
+            document.getElementById('planModal').style.display = 'block';
+        }).catch(function() {
+            loadPlanLocal();
+            document.getElementById('planModal').style.display = 'block';
+        });
+    });
+    
+    // Закрытие окна плана лечения
+    document.getElementById('planModal').addEventListener('click', function(e) {
+        if (e.target === document.getElementById('planModal')) {
+            document.getElementById('planModal').style.display = 'none';
+        }
+    });
+
+    // ========== ЗАПУСК ==========
     setStatus('online', 'Готово');
     renderSchedule();
 }
