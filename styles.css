@@ -642,3 +642,46 @@ body {
     }
     .plan-table input { border: none; }
 }
+/* ========== ЛОГОТИПЫ ========== */
+.login-logo-img {
+    max-width: 150px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 15px;
+}
+
+.header-logo-img {
+    max-height: 50px;
+    width: auto;
+    display: block;
+    border-radius: 6px;
+    background: white;
+    padding: 3px;
+}
+
+.plan-logo-img {
+    max-width: 200px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 10px;
+}
+
+@media (max-width: 600px) {
+    .login-logo-img {
+        max-width: 120px;
+    }
+    .header-logo-img {
+        max-height: 35px;
+    }
+    .plan-logo-img {
+        max-width: 150px;
+    }
+}
+
+@media print {
+    .plan-logo-img {
+        max-width: 180px;
+    }
+}
