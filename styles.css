@@ -627,6 +627,23 @@ body {
 .btn-plan-print { background: #6c757d; color: white; }
 .btn-plan-clear { background: #b02a2a; color: white; }
 
+/* ========== КНОПКА УДАЛЕНИЯ СТРОКИ В ПЛАНЕ ========== */
+.plan-delete-btn {
+    background: #f44336;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+    line-height: 1;
+}
+
+.plan-delete-btn:hover {
+    background: #d32f2f;
+}
+
 /* Адаптив плана лечения */
 @media (max-width: 700px) {
     .plan-content { padding: 12px; }
@@ -652,6 +669,7 @@ body {
     .plan-table input { font-size: 11px; }
     .plan-total { font-size: 15px; }
     .plan-buttons .btn { padding: 8px 12px; font-size: 11px; }
+    .plan-delete-btn { padding: 3px 6px; font-size: 11px; }
 }
 
 /* ========== ЛОГОТИПЫ (шапка и вход) ========== */
@@ -727,7 +745,14 @@ body {
     /* Скрываем кнопки, крестик и пустые элементы */
     .plan-buttons,
     .close-btn,
-    #planModal .btn {
+    #planModal .btn,
+    .plan-delete-btn {
+        display: none !important;
+    }
+    
+    /* Скрываем колонку "Удалить" при печати */
+    .plan-table th:last-child,
+    .plan-table td:last-child {
         display: none !important;
     }
     
