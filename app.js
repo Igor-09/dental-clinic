@@ -116,8 +116,6 @@ function initApp(user) {
             });
         }
         document.getElementById('historyList').innerHTML = html;
-        
-        // Клик по строке истории
         document.querySelectorAll('.history-item').forEach(function(item) {
             item.addEventListener('click', function() {
                 document.getElementById('historyModal').style.display = 'none';
@@ -276,7 +274,7 @@ function initApp(user) {
     eventModal.addEventListener('click', function(e) { if (e.target === eventModal) closeModal(); });
     document.getElementById('historyModal').addEventListener('click', function(e) { if (e.target === document.getElementById('historyModal')) document.getElementById('historyModal').style.display = 'none'; });
     
-    // ========== КНОПКА ИСТОРИИ (ЗДЕСЬ!) ==========
+    // ========== КНОПКА ИСТОРИИ ==========
     document.getElementById('historyBtn').addEventListener('click', function() {
         console.log('Кнопка истории нажата!');
         showHistory();
@@ -285,9 +283,8 @@ function initApp(user) {
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && eventModal.style.display === 'block') closeModal(); });
     window.addEventListener('resize', function() { var wd = getWeekDates(currentStartDate); placeOverlays(wd); });
     
-       // ========== ПЛАН ЛЕЧЕНИЯ ==========
+    // ========== ПЛАН ЛЕЧЕНИЯ ==========
     
-    var planRows = [];
     var PLAN_STORAGE_KEY = 'implantclinic_plan_v1';
     
     function fmtPlan(n) {
@@ -389,7 +386,6 @@ function initApp(user) {
         }
     }
     
-    // Глобальные функции для кнопок
     window._addPlanRow = function() {
         createPlanRow();
         savePlanLocal();
@@ -399,7 +395,6 @@ function initApp(user) {
         var rows = collectPlanData();
         localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(rows));
         
-        // Сохраняем в Firebase
         setStatus('syncing', 'Сохранение плана...');
         db.ref('treatmentPlan').set({
             rows: rows,
@@ -422,14 +417,30 @@ function initApp(user) {
     };
     
     window._printPlan = function() {
-        window.print();
+        // Скрываем пустые строки перед печатью
+        var hiddenRows = [];
+        document.querySelectorAll('#planTableBody tr').forEach(function(tr) {
+            var nameVal = tr.children[1].querySelector('input').value.trim();
+            var priceVal = tr.children[2].querySelector('input').value.trim();
+            var qtyVal = tr.children[3].querySelector('input').value.trim();
+            if (!nameVal && !priceVal && (qtyVal === '1' || !qtyVal)) {
+                tr.style.display = 'none';
+                hiddenRows.push(tr);
+            }
+        });
+        
+        setTimeout(function() {
+            window.print();
+            setTimeout(function() {
+                hiddenRows.forEach(function(tr) { tr.style.display = ''; });
+            }, 500);
+        }, 100);
     };
     
     // Открытие окна плана лечения
     document.getElementById('planBtn').addEventListener('click', function() {
         console.log('План лечения открыт');
         
-        // Пробуем загрузить из Firebase
         db.ref('treatmentPlan').once('value').then(function(snap) {
             var data = snap.val();
             if (data && data.rows && data.rows.length > 0) {
