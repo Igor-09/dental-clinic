@@ -644,7 +644,81 @@ body {
     background: #d32f2f;
 }
 
-/* Адаптив плана лечения */
+/* ========== ЛОГОТИПЫ (шапка и вход) ========== */
+.login-logo-img {
+    max-width: 150px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto 15px;
+}
+
+.header-logo-img {
+    max-height: 50px;
+    width: auto;
+    display: block;
+    border-radius: 6px;
+    background: white;
+    padding: 3px;
+}
+
+/* ========== МОБИЛЬНАЯ ПРОКРУТКА И АДАПТИВ ========== */
+@media (max-width: 768px) {
+    html {
+        overflow-y: auto !important;
+        height: auto !important;
+    }
+    
+    body {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+    }
+    
+    .app-background {
+        height: auto !important;
+        min-height: 100vh !important;
+        overflow-y: auto !important;
+    }
+    
+    .container {
+        height: auto !important;
+        overflow: visible !important;
+    }
+    
+    .schedule-wrapper {
+        overflow-x: auto !important;
+        overflow-y: visible !important;
+        max-height: none !important;
+        flex: none !important;
+    }
+    
+    .modal {
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .modal-content {
+        max-height: none !important;
+        margin: 20px auto !important;
+    }
+    
+    .plan-content {
+        max-height: none !important;
+        overflow-y: visible !important;
+        margin: 20px auto !important;
+    }
+    
+    .history-content {
+        max-height: none !important;
+        margin: 20px auto !important;
+    }
+    
+    .login-logo-img { max-width: 120px; }
+    .header-logo-img { max-height: 35px; }
+}
+
 @media (max-width: 700px) {
     .plan-content { padding: 12px; }
     .plan-top-row {
@@ -672,29 +746,6 @@ body {
     .plan-delete-btn { padding: 3px 6px; font-size: 11px; }
 }
 
-/* ========== ЛОГОТИПЫ (шапка и вход) ========== */
-.login-logo-img {
-    max-width: 150px;
-    width: 100%;
-    height: auto;
-    display: block;
-    margin: 0 auto 15px;
-}
-
-.header-logo-img {
-    max-height: 50px;
-    width: auto;
-    display: block;
-    border-radius: 6px;
-    background: white;
-    padding: 3px;
-}
-
-@media (max-width: 600px) {
-    .login-logo-img { max-width: 120px; }
-    .header-logo-img { max-height: 35px; }
-}
-
 /* ========== ПЕЧАТЬ ТОЛЬКО ПЛАНА ЛЕЧЕНИЯ ========== */
 @media print {
     @page {
@@ -710,7 +761,6 @@ body {
         background: white !important;
     }
     
-    /* Скрываем всё, кроме плана лечения */
     body > * {
         display: none !important;
     }
@@ -742,7 +792,6 @@ body {
         visibility: visible !important;
     }
     
-    /* Скрываем кнопки, крестик и пустые элементы */
     .plan-buttons,
     .close-btn,
     #planModal .btn,
@@ -750,13 +799,11 @@ body {
         display: none !important;
     }
     
-    /* Скрываем колонку "Удалить" при печати */
     .plan-table th:last-child,
     .plan-table td:last-child {
         display: none !important;
     }
     
-    /* Компактные отступы, чтобы влезло на один лист */
     .plan-top-row {
         margin-bottom: 5px !important;
         padding-bottom: 4px !important;
@@ -788,7 +835,6 @@ body {
         page-break-after: auto;
     }
     
-    /* Цвета при печати */
     .plan-table th {
         background: #8fa881 !important;
         color: white !important;
@@ -808,7 +854,6 @@ body {
         print-color-adjust: exact;
     }
     
-    /* Скрываем пустые строки таблицы */
     #planTableBody tr:empty {
         display: none !important;
     }
