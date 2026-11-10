@@ -285,7 +285,8 @@ function initApp(user) {
     
     // ========== ПЛАН ЛЕЧЕНИЯ ==========
     
-    var PLAN_STORAGE_KEY = 'implantclinic_plan_v1';
+       var PLAN_STORAGE_KEY = 'implantclinic_plan_v1';
+    var PLAN_PATIENT_KEY = 'implantclinic_plan_patient_v1';
     
     function fmtPlan(n) {
         return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
