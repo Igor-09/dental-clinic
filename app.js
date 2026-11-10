@@ -302,7 +302,8 @@ function initApp(user) {
             '<td class="name"><input type="text" value="' + escapeHtmlPlan(name) + '" placeholder="Название услуги"></td>' +
             '<td><input type="number" min="0" step="0.01" value="' + price + '" placeholder="0"></td>' +
             '<td><input type="number" min="1" step="1" value="' + qty + '" placeholder="1"></td>' +
-            '<td class="sum">0</td>';
+            '<td class="sum">0</td>' +
+            '<td><button class="plan-delete-btn" title="Удалить строку">✕</button></td>';
         
         var inputs = tr.querySelectorAll('input');
         inputs.forEach(function(inp) {
@@ -311,6 +312,26 @@ function initApp(user) {
                 recalcPlanAll();
                 savePlanLocal();
             });
+        });
+        
+        // Кнопка удаления строки
+        var delBtn = tr.querySelector('.plan-delete-btn');
+        delBtn.addEventListener('click', function() {
+            var rows = document.querySelectorAll('#planTableBody tr');
+            if (rows.length <= 1) {
+                // Если последняя строка — просто очищаем её
+                tr.children[1].querySelector('input').value = '';
+                tr.children[2].querySelector('input').value = '';
+                tr.children[3].querySelector('input').value = '1';
+                updatePlanRow(tr);
+                recalcPlanAll();
+                savePlanLocal();
+            } else {
+                // Удаляем строку
+                tr.remove();
+                recalcPlanAll();
+                savePlanLocal();
+            }
         });
         
         document.getElementById('planTableBody').appendChild(tr);
