@@ -285,12 +285,35 @@ function initApp(user) {
     
     // ========== ПЛАН ЛЕЧЕНИЯ ==========
     
-       var PLAN_STORAGE_KEY = 'implantclinic_plan_v1';
+    var PLAN_STORAGE_KEY = 'implantclinic_plan_v1';
     var PLAN_PATIENT_KEY = 'implantclinic_plan_patient_v1';
     
     function fmtPlan(n) {
         return n.toLocaleString('ru-RU', { maximumFractionDigits: 2 });
     }
+    
+    function savePatientLocal() {
+        var patient = {
+            name: document.getElementById('planPatientName') ? document.getElementById('planPatientName').value : '',
+            date: document.getElementById('planPatientDate') ? document.getElementById('planPatientDate').value : ''
+        };
+        localStorage.setItem(PLAN_PATIENT_KEY, JSON.stringify(patient));
+    }
+    
+    function loadPatientLocal() {
+        var raw = localStorage.getItem(PLAN_PATIENT_KEY);
+        if (raw) {
+            try {
+                var p = JSON.parse(raw);
+                if (document.getElementById('planPatientName')) document.getElementById('planPatientName').value = p.name || '';
+                if (document.getElementById('planPatientDate')) document.getElementById('planPatientDate').value = p.date || '';
+            } catch(e) {}
+        }
+    }
+    
+    window._savePlanPatient = function() {
+        savePatientLocal();
+    };
     
     function createPlanRow(name, price, qty) {
         name = name || '';
@@ -315,12 +338,10 @@ function initApp(user) {
             });
         });
         
-        // Кнопка удаления строки
         var delBtn = tr.querySelector('.plan-delete-btn');
         delBtn.addEventListener('click', function() {
             var rows = document.querySelectorAll('#planTableBody tr');
             if (rows.length <= 1) {
-                // Если последняя строка — просто очищаем её
                 tr.children[1].querySelector('input').value = '';
                 tr.children[2].querySelector('input').value = '';
                 tr.children[3].querySelector('input').value = '1';
@@ -328,7 +349,6 @@ function initApp(user) {
                 recalcPlanAll();
                 savePlanLocal();
             } else {
-                // Удаляем строку
                 tr.remove();
                 recalcPlanAll();
                 savePlanLocal();
@@ -415,11 +435,18 @@ function initApp(user) {
     
     window._savePlan = function() {
         var rows = collectPlanData();
+        var patient = {
+            name: document.getElementById('planPatientName') ? document.getElementById('planPatientName').value : '',
+            date: document.getElementById('planPatientDate') ? document.getElementById('planPatientDate').value : ''
+        };
+        
         localStorage.setItem(PLAN_STORAGE_KEY, JSON.stringify(rows));
+        localStorage.setItem(PLAN_PATIENT_KEY, JSON.stringify(patient));
         
         setStatus('syncing', 'Сохранение плана...');
         db.ref('treatmentPlan').set({
             rows: rows,
+            patient: patient,
             updatedAt: new Date().toISOString(),
             updatedBy: currentUserId
         }).then(function() {
@@ -432,14 +459,16 @@ function initApp(user) {
     };
     
     window._clearPlan = function() {
-        if (!confirm('Очистить всю таблицу?')) return;
+        if (!confirm('Очистить всю таблицу и данные пациента?')) return;
         document.getElementById('planTableBody').innerHTML = '';
+        if (document.getElementById('planPatientName')) document.getElementById('planPatientName').value = '';
+        if (document.getElementById('planPatientDate')) document.getElementById('planPatientDate').value = '';
         createPlanRow();
         savePlanLocal();
+        savePatientLocal();
     };
     
     window._printPlan = function() {
-        // Скрываем пустые строки перед печатью
         var hiddenRows = [];
         document.querySelectorAll('#planTableBody tr').forEach(function(tr) {
             var nameVal = tr.children[1].querySelector('input').value.trim();
@@ -470,12 +499,18 @@ function initApp(user) {
                 data.rows.forEach(function(r) {
                     createPlanRow(r.name, r.price, r.qty);
                 });
+                if (data.patient) {
+                    if (document.getElementById('planPatientName')) document.getElementById('planPatientName').value = data.patient.name || '';
+                    if (document.getElementById('planPatientDate')) document.getElementById('planPatientDate').value = data.patient.date || '';
+                }
             } else {
                 loadPlanLocal();
+                loadPatientLocal();
             }
             document.getElementById('planModal').style.display = 'block';
         }).catch(function() {
             loadPlanLocal();
+            loadPatientLocal();
             document.getElementById('planModal').style.display = 'block';
         });
     });
